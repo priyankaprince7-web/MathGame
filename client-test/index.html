@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brain Battle Controller</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: "Ink Free", "Comic Sans MS", "Patrick Hand", cursive;
+      background: #f7f1dc;
+      color: #111;
+      text-align: center;
+    }
+
+    .screen {
+      min-height: 100vh;
+      padding: 24px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+
+      /* grid paper */
+      background-color: #fffdf2;
+      background-image:
+        linear-gradient(#b7d8ff 1px, transparent 1px),
+        linear-gradient(90deg, #b7d8ff 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    h1 {
+      font-size: 48px;
+      margin: 16px 0;
+      text-shadow: 2px 2px 0 white;
+    }
+
+    h2 {
+      font-size: 34px;
+    }
+
+    input {
+      width: 90%;
+      max-width: 360px;
+      font-family: inherit;
+      font-size: 26px;
+      padding: 14px;
+      margin: 10px 0;
+      border: 3px solid #111;
+      border-radius: 12px;
+      background: #fffef7;
+      text-align: center;
+    }
+
+    button {
+      width: 90%;
+      max-width: 360px;
+      font-family: inherit;
+      font-size: 26px;
+      padding: 16px;
+      margin: 12px 0;
+      border: 3px solid #111;
+      border-radius: 14px;
+      background: #fffef7;
+      box-shadow: 4px 4px 0 #111;
+      font-weight: bold;
+    }
+
+    button:active {
+      transform: translate(3px, 3px);
+      box-shadow: 1px 1px 0 #111;
+    }
+
+    #attackBtn {
+      background: #ffd6d6;
+    }
+
+    #questionText {
+      font-size: 52px;
+      margin: 28px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="joinScreen" class="screen">
+    <h1>Brain Battle</h1>
+    <p class="small">Join the battle using the room code on the host screen.</p>
+
+    <input id="nameInput" placeholder="Your name" autocomplete="off" />
+    <input id="roomInput" placeholder="Room code" autocomplete="off" />
+
+    <button id="joinBtn">Join Battle</button>
+
+    <p id="joinStatus"></p>
+  </div>
+
+  <div id="lobbyScreen" class="screen" hidden>
+    <h1>Brain Battle</h1>
+    <h2>Waiting Room</h2>
+    <p id="lobbyStatus">Connected. Waiting for the host to start.</p>
+  </div>
+
+  <div id="gameScreen" class="screen" hidden>
+    <h2 id="questionNumberText">Question</h2>
+    <div id="questionText">Waiting...</div>
+
+    <input id="answerInput" inputmode="numeric" placeholder="Answer" autocomplete="off" />
+
+    <button id="submitAnswerBtn">Submit Answer</button>
+
+    <div id="damageBox">Stored Damage: 0</div>
+
+    <button id="attackBtn">Attack</button>
+
+    <p id="statusText"></p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@colyseus/sdk@0.17.26/dist/colyseus.js"></script>
+  <script src="./main.js"></script>
+  
+</body>
+</html>
