@@ -1,4 +1,4 @@
-const client = new Colyseus.Client("ws://localhost:2567");
+const client = new Colyseus.Client("mathgame-production-5026.up.railway.app");
 
 let room = null;
 
