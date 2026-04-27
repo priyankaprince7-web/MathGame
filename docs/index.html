@@ -46,11 +46,14 @@
       max-width: 360px;
       font-family: inherit;
       font-size: 26px;
-      padding: 14px;
+      padding: 18px;
       margin: 10px 0;
-      border: 3px solid #111;
-      border-radius: 12px;
-      background: #fffef7;
+      border: none;
+      outline: none;
+      background: transparent;
+      background-image: url("./assets/Button_sprite_empty.png");
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
       text-align: center;
     }
 
@@ -59,18 +62,48 @@
       max-width: 360px;
       font-family: inherit;
       font-size: 26px;
-      padding: 16px;
+      padding: 20px;
       margin: 12px 0;
-      border: 3px solid #111;
-      border-radius: 14px;
-      background: #fffef7;
-      box-shadow: 4px 4px 0 #111;
+      border: none;
+      background: transparent;
+      background-image: url("./assets/Button_sprite_empty.png");
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
       font-weight: bold;
     }
 
     button:active {
-      transform: translate(3px, 3px);
-      box-shadow: 1px 1px 0 #111;
+      background-image: url("./assets/Button_sprite_filled.png");
+      transform: scale(0.96);
+    }
+
+    #customKeypad {
+      display: grid;
+      grid-template-columns: repeat(3, 90px);
+      gap: 14px;
+      justify-content: center;
+      margin: 18px 0;
+    }
+
+    .keypadBtn {
+      width: 90px;
+      height: 70px;
+      max-width: none;
+      margin: 0;
+      padding: 0;
+      border: none;
+      background: transparent;
+      background-image: url("./assets/Keypad_sprite_empty.png");
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      font-size: 32px;
+      font-family: inherit;
+      font-weight: bold;
+    }
+
+    .keypadBtn:active {
+      background-image: url("./assets/Keypad_sprite_filled.png");
+      transform: scale(0.94);
     }
 
     #attackBtn {
@@ -80,6 +113,36 @@
     #questionText {
       font-size: 52px;
       margin: 28px 0;
+    }
+
+    .attackKey {
+      grid-column: span 3;   /* THIS makes it stretch across */
+
+      width: 100%;
+      height: 80px;
+
+      font-size: 34px;
+      font-weight: bold;
+
+      background-image: url("./assets/Button_sprite_empty.png");
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+
+      border: none;
+    }
+
+    .attackKey:active {
+      background-image: url("./assets/Button_sprite_filled.png");
+      transform: scale(0.97);
+    }
+
+    .submitKey {
+      background-image: url("./assets/Button_sprite_empty.png"); /* bigger feel */
+      font-size: 28px;
+    }
+
+    .submitKey:active {
+      background-image: url("./assets/Button_sprite_filled.png");
     }
   </style>
 </head>
@@ -107,13 +170,38 @@
     <h2 id="questionNumberText">Question</h2>
     <div id="questionText">Waiting...</div>
 
-    <input id="answerInput" inputmode="numeric" placeholder="Answer" autocomplete="off" />
+    <input 
+      id="answerInput" 
+      placeholder="Answer" 
+      autocomplete="off" 
+      readonly 
+    />
+
+    <div id="customKeypad">
+      <button class="keypadBtn" data-key="1">1</button>
+      <button class="keypadBtn" data-key="2">2</button>
+      <button class="keypadBtn" data-key="3">3</button>
+
+      <button class="keypadBtn" data-key="4">4</button>
+      <button class="keypadBtn" data-key="5">5</button>
+      <button class="keypadBtn" data-key="6">6</button>
+
+      <button class="keypadBtn" data-key="7">7</button>
+      <button class="keypadBtn" data-key="8">8</button>
+      <button class="keypadBtn" data-key="9">9</button>
+
+      <!-- swapped row -->
+      <button class="keypadBtn" data-key="back">⌫</button>
+      <button class="keypadBtn" data-key="0">0</button>
+      <button class="keypadBtn submitKey" data-key="submit">OK</button>
+
+      <!-- attack row -->
+      <button id="attackBtn" class="attackKey">ATTACK</button>
+    </div>
 
     <button id="submitAnswerBtn">Submit Answer</button>
 
     <div id="damageBox">Stored Damage: 0</div>
-
-    <button id="attackBtn">Attack</button>
 
     <p id="statusText"></p>
   </div>
