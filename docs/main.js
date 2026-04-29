@@ -21,6 +21,8 @@ const damageBox = document.getElementById("damageBox");
 const attackBtn = document.getElementById("attackBtn");
 const statusText = document.getElementById("statusText");
 
+const keypadButtons = document.querySelectorAll(".keypadBtn");
+
 function showScreen(screenId) {
   joinScreen.hidden = true;
   lobbyScreen.hidden = true;
@@ -83,8 +85,6 @@ function setupRoomListeners() {
     questionText.textContent = data.prompt;
 
     answerInput.value = "";
-    answerInput.focus();
-
     statusText.textContent = "Solve it!";
   });
 
@@ -131,7 +131,7 @@ function setupRoomListeners() {
   });
 }
 
-submitAnswerBtn.onclick = () => {
+function submitAnswer() {
   if (!room) return;
 
   const answer = answerInput.value.trim();
@@ -142,11 +142,13 @@ submitAnswerBtn.onclick = () => {
   }
 
   room.send("submitAnswer", { answer });
-};
+}
+
+submitAnswerBtn.onclick = submitAnswer;
 
 answerInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
-    submitAnswerBtn.click();
+    submitAnswer();
   }
 });
 
@@ -156,3 +158,21 @@ attackBtn.onclick = () => {
   room.send("attack");
   statusText.textContent = "Attack sent!";
 };
+
+keypadButtons.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const key = btn.dataset.key;
+
+    if (key === "back") {
+      answerInput.value = answerInput.value.slice(0, -1);
+      return;
+    }
+
+    if (key === "submit") {
+      submitAnswer();
+      return;
+    }
+
+    answerInput.value += key;
+  });
+});
