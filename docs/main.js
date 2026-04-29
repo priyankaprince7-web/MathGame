@@ -1,5 +1,3 @@
-alert("MAIN JS 3000 LOADED");
-
 const client = new Colyseus.Client("wss://mathgame-production-5026.up.railway.app");
 
 let room = null;
@@ -22,8 +20,6 @@ const submitAnswerBtn = document.getElementById("submitAnswerBtn");
 const damageBox = document.getElementById("damageBox");
 const attackBtn = document.getElementById("attackBtn");
 const statusText = document.getElementById("statusText");
-
-const keypadButtons = document.querySelectorAll(".keypadBtn");
 
 function showScreen(screenId) {
   joinScreen.hidden = true;
@@ -59,12 +55,11 @@ joinBtn.onclick = async () => {
     setupRoomListeners();
 
     showScreen("lobbyScreen");
-    lobbyStatus.textContent = "Connected. Waiting for host.";
+    lobbyStatus.textContent = "Connected. Waiting for the host to start.";
 
     room.send("joinLobby", { name });
-
   } catch (error) {
-    console.error("Join failed:", error);
+    console.error(error);
     joinStatus.textContent = "Join failed: " + error.message;
     joinBtn.disabled = false;
   }
@@ -88,6 +83,8 @@ function setupRoomListeners() {
     questionText.textContent = data.prompt;
 
     answerInput.value = "";
+    answerInput.focus();
+
     statusText.textContent = "Solve it!";
   });
 
@@ -134,8 +131,7 @@ function setupRoomListeners() {
   });
 }
 
-/* ---------- SUBMIT FUNCTION (used by both button + keypad) ---------- */
-function submitAnswer() {
+submitAnswerBtn.onclick = () => {
   if (!room) return;
 
   const answer = answerInput.value.trim();
@@ -146,40 +142,17 @@ function submitAnswer() {
   }
 
   room.send("submitAnswer", { answer });
-}
+};
 
-submitAnswerBtn.onclick = submitAnswer;
-
-/* ---------- ENTER KEY SUPPORT ---------- */
 answerInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
-    submitAnswer();
+    submitAnswerBtn.click();
   }
 });
 
-/* ---------- ATTACK ---------- */
 attackBtn.onclick = () => {
   if (!room) return;
 
   room.send("attack");
   statusText.textContent = "Attack sent!";
 };
-
-/* ---------- KEYPAD LOGIC ---------- */
-keypadButtons.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const key = btn.dataset.key;
-
-    if (key === "back") {
-      answerInput.value = answerInput.value.slice(0, -1);
-      return;
-    }
-
-    if (key === "submit") {
-      submitAnswer();
-      return;
-    }
-
-    answerInput.value += key;
-  });
-});
