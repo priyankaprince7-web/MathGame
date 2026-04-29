@@ -146,8 +146,10 @@ export class TournamentRoom extends Room {
 
     console.log(client.sessionId, "joined!", options);
 
-    if (!this.state.players.has(client.sessionId)) {
-      const player = new PlayerState();
+    let player = this.state.players.get(client.sessionId);
+
+    if (!player) {
+      player = new PlayerState();
       player.id = client.sessionId;
       player.name = role === "host" ? "Host" : "Joining...";
       player.role = role;
@@ -157,6 +159,10 @@ export class TournamentRoom extends Room {
       player.questionIndex = 0;
 
       this.state.players.set(client.sessionId, player);
+    }
+
+    if (this.gameStarted && player.role === "player") {
+      this.sendQuestionToPlayer(client, player);
     }
 
     this.broadcastPlayers();
