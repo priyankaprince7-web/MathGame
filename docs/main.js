@@ -50,31 +50,11 @@ joinBtn.onclick = async () => {
 
   try {
     joinBtn.disabled = true;
-    joinStatus.textContent = "Step 1: button clicked";
-
-    console.log("Step 1: button clicked");
-    console.log("Room code typed:", roomId);
-
-    setTimeout(() => {
-      joinStatus.textContent = "Still trying after 3 seconds...";
-      console.log("Still trying after 3 seconds...");
-    }, 3000);
-
-    setTimeout(() => {
-      if (!room) {
-        joinStatus.textContent = "Still not joined after 8 seconds. Room code/server issue.";
-        joinBtn.disabled = false;
-      }
-    }, 8000);
-
-    joinStatus.textContent = "Step 2: trying to join room...";
+    joinStatus.textContent = "Joining...";
 
     room = await client.joinById(roomId, {
       role: "player"
     });
-
-    joinStatus.textContent = "Step 3: joined room!";
-    console.log("Joined room:", room.roomId, room.sessionId);
 
     setupRoomListeners();
 
