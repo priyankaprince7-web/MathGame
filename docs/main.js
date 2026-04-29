@@ -1,3 +1,5 @@
+alert("MAIN JS 3000 LOADED");
+
 const client = new Colyseus.Client("wss://mathgame-production-5026.up.railway.app");
 
 let room = null;
