@@ -50,29 +50,36 @@ joinBtn.onclick = async () => {
 
   try {
     joinBtn.disabled = true;
-    joinStatus.textContent = "Joining...";
+    joinStatus.textContent = "Step 1: button clicked";
 
-    console.log("Trying to join room:", roomId);
+    console.log("Step 1: button clicked");
+    console.log("Room code typed:", roomId);
 
-    const joinPromise = client.joinById(roomId, {
+    setTimeout(() => {
+      joinStatus.textContent = "Still trying after 3 seconds...";
+      console.log("Still trying after 3 seconds...");
+    }, 3000);
+
+    setTimeout(() => {
+      if (!room) {
+        joinStatus.textContent = "Still not joined after 8 seconds. Room code/server issue.";
+        joinBtn.disabled = false;
+      }
+    }, 8000);
+
+    joinStatus.textContent = "Step 2: trying to join room...";
+
+    room = await client.joinById(roomId, {
       role: "player"
     });
 
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => {
-        reject(new Error("Join timed out. Check the room code or server."));
-      }, 8000);
-    });
-
-    room = await Promise.race([joinPromise, timeoutPromise]);
-
+    joinStatus.textContent = "Step 3: joined room!";
     console.log("Joined room:", room.roomId, room.sessionId);
 
-    // IMPORTANT: set up listeners BEFORE sending joinLobby
     setupRoomListeners();
 
     showScreen("lobbyScreen");
-    lobbyStatus.textContent = "Connected. Waiting for the host to start.";
+    lobbyStatus.textContent = "Connected. Waiting for host.";
 
     room.send("joinLobby", { name });
 
