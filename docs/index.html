@@ -182,7 +182,7 @@
       width: 0%;
 
       background-image: url("./assets/Button_sprite_filled.png");
-      background-size: auto 100%;
+      background-size: 100% 100%;
       background-repeat: no-repeat;
       background-position: left center;
 
@@ -199,6 +199,12 @@
       font-family: inherit;
       line-height: 80px;
       pointer-events: none;
+    }
+
+    .keypadBtn,
+    .attackKey {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .attackKey:active {
@@ -240,12 +246,12 @@
     <h2 id="questionNumberText">Question</h2>
     <div id="questionText">Waiting...</div>
 
-    <input 
-      id="answerInput" 
-      placeholder="Answer" 
-      autocomplete="off" 
-      readonly 
-    />
+  <input 
+    id="answerInput" 
+    placeholder="Answer" 
+    autocomplete="off"
+    inputmode="none"
+  />
 
     <div id="customKeypad">
       <button class="keypadBtn" data-key="1">1</button>

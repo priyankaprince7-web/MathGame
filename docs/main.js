@@ -24,6 +24,22 @@ const statusText = document.getElementById("statusText");
 
 const keypadButtons = document.querySelectorAll(".keypadBtn");
 
+document.addEventListener("keydown", (event) => {
+  if (gameScreen.hidden) return;
+
+  if (event.key >= "0" && event.key <= "9") {
+    answerInput.value += event.key;
+  }
+
+  if (event.key === "Backspace") {
+    answerInput.value = answerInput.value.slice(0, -1);
+  }
+
+  if (event.key === "Enter") {
+    submitAnswer();
+  }
+});
+
 function showScreen(screenId) {
   joinScreen.hidden = true;
   lobbyScreen.hidden = true;
@@ -156,15 +172,10 @@ answerInput.addEventListener("keydown", (event) => {
   }
 });
 
-attackBtn.onclick = () => {
-  if (!room) return;
-
-  room.send("attack");
-  statusText.textContent = "Attack sent!";
-};
-
 keypadButtons.forEach((btn) => {
-  btn.addEventListener("click", () => {
+  btn.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+
     const key = btn.dataset.key;
 
     if (key === "back") {
@@ -179,4 +190,14 @@ keypadButtons.forEach((btn) => {
 
     answerInput.value += key;
   });
+
+  attackBtn.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+
+    if (!room) return;
+
+    room.send("attack");
+    statusText.textContent = "Attack sent!";
+  });
+
 });
