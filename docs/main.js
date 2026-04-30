@@ -97,6 +97,8 @@ function setupRoomListeners() {
     statusText.textContent = "Game started!";
     customKeypad.hidden = false;
     endButtons.hidden = true;
+    answerInput.hidden = false;
+    answerInput.disabled = false;
   });
 
   room.onMessage("question", (data) => {
@@ -110,6 +112,8 @@ function setupRoomListeners() {
 
     customKeypad.hidden = false;
     endButtons.hidden = true;
+    answerInput.hidden = false;
+    answerInput.disabled = false;
   });
 
   room.onMessage("answerFeedback", (data) => {
@@ -179,10 +183,12 @@ function setupRoomListeners() {
     customKeypad.hidden = true;
     endButtons.hidden = false;
 
+    answerInput.hidden = true;
+    answerInput.disabled = true;
+
     submitAnswerBtn.disabled = true;
     attackBtn.disabled = true;
     shieldBtn.disabled = true;
-    answerInput.disabled = true;
 
     playAgainBtn.addEventListener("pointerdown", () => {
       if (!room) return;
@@ -269,4 +275,19 @@ shieldBtn.addEventListener("pointerdown", (event) => {
   }
 
   room.send("shield");
+
+  playAgainBtn.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+
+    if (!room) return;
+
+    room.send("playAgain");
+  });
+
+  backToLobbyBtn.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+
+    showScreen("lobbyScreen");
+  });
+
 });
