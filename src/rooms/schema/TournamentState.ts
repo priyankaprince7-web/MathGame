@@ -7,6 +7,7 @@ export class PlayerState extends Schema {
   @type("boolean") connected: boolean = true;
   @type("number") health: number = 10;
   @type("number") storedDamage: number = 0;
+  @type("number") shieldUntil: number = 0;
   @type("number") questionIndex: number = 0;
 }
 

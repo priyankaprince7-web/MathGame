@@ -19,26 +19,12 @@ const answerInput = document.getElementById("answerInput");
 const submitAnswerBtn = document.getElementById("submitAnswerBtn");
 const damageBox = document.getElementById("damageBox");
 const attackBtn = document.getElementById("attackBtn");
+const shieldBtn = document.getElementById("shieldBtn");
 const attackFill = document.getElementById("attackFill");
+const shieldFill = document.getElementById("shieldFill");
 const statusText = document.getElementById("statusText");
 
 const keypadButtons = document.querySelectorAll(".keypadBtn");
-
-document.addEventListener("keydown", (event) => {
-  if (gameScreen.hidden) return;
-
-  if (event.key >= "0" && event.key <= "9") {
-    answerInput.value += event.key;
-  }
-
-  if (event.key === "Backspace") {
-    answerInput.value = answerInput.value.slice(0, -1);
-  }
-
-  if (event.key === "Enter") {
-    submitAnswer();
-  }
-});
 
 function showScreen(screenId) {
   joinScreen.hidden = true;
@@ -118,17 +104,29 @@ function setupRoomListeners() {
 
     const me = state.players.find((p) => p.id === room.sessionId);
 
-  if (me) {
-    const fillPercent = Math.min(me.storedDamage, 10) * 10;
-    attackFill.style.width = fillPercent + "%";
-  }
+    if (me) {
+      damageBox.textContent = "Stored Damage: " + me.storedDamage;
+
+      const attackPercent = Math.min(me.storedDamage, 10) * 10;
+      attackFill.style.width = attackPercent + "%";
+
+      const shieldPercent = me.shieldActive
+        ? Math.max(0, Math.min(me.shieldTimeLeft / 3000, 1)) * 100
+        : 0;
+
+      shieldFill.style.width = shieldPercent + "%";
+    }
   });
 
   room.onMessage("attackResult", (data) => {
     if (data.attackerId === room.sessionId) {
-      statusText.textContent = `You attacked for ${data.damage} damage!`;
+      statusText.textContent = data.blocked
+        ? `You attacked for ${data.damage} damage, but shield reduced it!`
+        : `You attacked for ${data.damage} damage!`;
     } else if (data.defenderId === room.sessionId) {
-      statusText.textContent = `${data.attackerName} attacked you for ${data.damage} damage!`;
+      statusText.textContent = data.blocked
+        ? `${data.attackerName} attacked, but your shield reduced it to ${data.damage}!`
+        : `${data.attackerName} attacked you for ${data.damage} damage!`;
     }
   });
 
@@ -141,6 +139,7 @@ function setupRoomListeners() {
 
     submitAnswerBtn.disabled = true;
     attackBtn.disabled = true;
+    shieldBtn.disabled = true;
     answerInput.disabled = true;
   });
 
@@ -164,7 +163,17 @@ function submitAnswer() {
 
 submitAnswerBtn.onclick = submitAnswer;
 
-answerInput.addEventListener("keydown", (event) => {
+document.addEventListener("keydown", (event) => {
+  if (gameScreen.hidden) return;
+
+  if (event.key >= "0" && event.key <= "9") {
+    answerInput.value += event.key;
+  }
+
+  if (event.key === "Backspace") {
+    answerInput.value = answerInput.value.slice(0, -1);
+  }
+
   if (event.key === "Enter") {
     submitAnswer();
   }
@@ -188,14 +197,21 @@ keypadButtons.forEach((btn) => {
 
     answerInput.value += key;
   });
+});
 
-  attackBtn.addEventListener("pointerdown", (event) => {
-    event.preventDefault();
+attackBtn.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
 
-    if (!room) return;
+  if (!room) return;
 
-    room.send("attack");
-    statusText.textContent = "Attack sent!";
-  });
+  room.send("attack");
+  statusText.textContent = "Attack sent!";
+});
 
+shieldBtn.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
+
+  if (!room) return;
+
+  room.send("shield");
 });

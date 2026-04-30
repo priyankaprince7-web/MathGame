@@ -9,7 +9,7 @@ type Question = {
 };
 
 export class TournamentRoom extends Room {
-  maxClients = 3; // 1 host + 2 players
+  maxClients = 3;
   state = new TournamentState();
 
   gameStarted = false;
@@ -56,6 +56,7 @@ export class TournamentRoom extends Room {
       for (const player of players) {
         player.health = 10;
         player.storedDamage = 0;
+        player.shieldUntil = 0;
         player.questionIndex = 0;
       }
 
@@ -95,7 +96,7 @@ export class TournamentRoom extends Room {
 
         client.send("answerFeedback", {
           correct: true,
-          message: "Correct! +1 stored damage"
+          message: "Correct! +1 charge"
         });
 
         this.sendQuestionToPlayer(client, player);
@@ -108,11 +109,32 @@ export class TournamentRoom extends Room {
       }
     });
 
+    this.onMessage("shield", (client) => {
+      if (!this.gameStarted) return;
+
+      const player = this.state.players.get(client.sessionId);
+      if (!player || player.role !== "player") return;
+
+      const cost = 3;
+
+      if (player.storedDamage < cost) {
+        client.send("statusMessage", "Need 3 charge for shield");
+        return;
+      }
+
+      player.storedDamage -= cost;
+      player.shieldUntil = Date.now() + 3000;
+
+      client.send("statusMessage", "Shield active for 3 seconds!");
+      this.broadcastGameState();
+    });
+
     this.onMessage("attack", (client) => {
       if (!this.gameStarted) return;
 
       const attacker = this.state.players.get(client.sessionId);
       if (!attacker || attacker.role !== "player") return;
+
       if (attacker.storedDamage <= 0) {
         client.send("statusMessage", "No stored damage to use");
         return;
@@ -121,8 +143,17 @@ export class TournamentRoom extends Room {
       const defender = this.getOpponent(attacker.id);
       if (!defender) return;
 
-      const damage = attacker.storedDamage;
+      let damage = attacker.storedDamage;
       attacker.storedDamage = 0;
+
+      const now = Date.now();
+      let blocked = false;
+
+      if (defender.shieldUntil > now) {
+        damage = Math.ceil(damage / 2);
+        blocked = true;
+      }
+
       defender.health = Math.max(0, defender.health - damage);
 
       this.broadcast("attackResult", {
@@ -130,7 +161,8 @@ export class TournamentRoom extends Room {
         attackerName: attacker.name,
         defenderId: defender.id,
         defenderName: defender.name,
-        damage
+        damage,
+        blocked
       });
 
       this.broadcastGameState();
@@ -154,6 +186,7 @@ export class TournamentRoom extends Room {
       player.connected = true;
       player.health = 10;
       player.storedDamage = 0;
+      player.shieldUntil = 0;
       player.questionIndex = 0;
 
       this.state.players.set(client.sessionId, player);
@@ -204,11 +237,15 @@ export class TournamentRoom extends Room {
       ? Math.max(0, this.matchEndsAt - Date.now())
       : 0;
 
+    const now = Date.now();
+
     const playersOnly = this.getPlayers().map((p) => ({
       id: p.id,
       name: p.name,
       health: p.health,
       storedDamage: p.storedDamage,
+      shieldActive: p.shieldUntil > now,
+      shieldTimeLeft: Math.max(0, p.shieldUntil - now),
       questionIndex: p.questionIndex
     }));
 
@@ -245,6 +282,7 @@ export class TournamentRoom extends Room {
     if (player.questionIndex >= this.questionDeck.length) {
       this.questionDeck.push(...this.generateQuestionDeck(50));
     }
+
     return this.questionDeck[player.questionIndex];
   }
 
@@ -293,6 +331,7 @@ export class TournamentRoom extends Room {
       this.state.status = "finished";
       this.clearTimers();
       this.broadcastGameState();
+
       this.broadcast("matchEnded", {
         winnerId: null,
         winnerName: "Draw",
@@ -300,6 +339,7 @@ export class TournamentRoom extends Room {
         loserName: "Draw",
         reason: "Time expired with equal health and equal stored damage"
       });
+
       this.broadcastStatus("Match ended in a draw");
     }
   }
