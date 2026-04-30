@@ -36,12 +36,20 @@ document.addEventListener("wheel", (e) => {
   e.preventDefault();
 }, { passive: false });
 
-document.querySelectorAll("button").forEach(btn => {
+document.querySelectorAll("button").forEach((btn) => {
   btn.addEventListener("pointerdown", () => {
     btn.classList.add("pressed");
+
+    setTimeout(() => {
+      btn.classList.remove("pressed");
+    }, 120);
   });
 
   btn.addEventListener("pointerup", () => {
+    btn.classList.remove("pressed");
+  });
+
+  btn.addEventListener("pointercancel", () => {
     btn.classList.remove("pressed");
   });
 
@@ -285,21 +293,27 @@ shieldBtn.addEventListener("pointerdown", (event) => {
 
   room.send("shield");
 
-  playAgainBtn.addEventListener("pointerdown", (event) => {
-    event.preventDefault();
-
+  playAgainBtn.addEventListener("click", () => {
     if (!room) return;
+
+    gameScreen.classList.remove("ended");
+
+    customKeypad.hidden = false;
+    endButtons.hidden = true;
+    answerInput.hidden = false;
+    answerInput.disabled = false;
 
     room.send("playAgain");
   });
 
-  backToLobbyBtn.addEventListener("pointerdown", (event) => {
-    event.preventDefault();
-
+  backToLobbyBtn.addEventListener("click", () => {
     showScreen("joinScreen");
+
+    gameScreen.classList.remove("ended");
 
     joinBtn.disabled = false;
     joinStatus.textContent = "";
+    lobbyStatus.textContent = "Connected. Waiting for the host to start.";
     roomInput.value = "";
   });
 
