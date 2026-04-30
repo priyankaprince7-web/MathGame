@@ -182,8 +182,8 @@
       width: 0%;
 
       background-image: url("./assets/Button_sprite_filled.png");
-      background-size: 100% 100%;
-      background-repeat: no-repeat;
+      background-size: calc(100% / 10) 100%; /* THIS is key */
+      background-repeat: repeat-x;
       background-position: left center;
 
       z-index: 1;

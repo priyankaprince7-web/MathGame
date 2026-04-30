@@ -118,12 +118,12 @@ function setupRoomListeners() {
 
     const me = state.players.find((p) => p.id === room.sessionId);
 
-  if (me) {
-    damageBox.textContent = "Stored Damage: " + me.storedDamage;
+    if (me) {
+      const segments = Math.min(me.storedDamage, 10); // 0–10
+      const fillPercent = segments * 10;              // 0–100 in steps
 
-    const fillPercent = Math.min(me.storedDamage, 10) * 10;
-    attackFill.style.width = fillPercent + "%";
-  }
+      attackFill.style.width = fillPercent + "%";
+    }
   });
 
   room.onMessage("attackResult", (data) => {
