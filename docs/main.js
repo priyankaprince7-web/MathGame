@@ -178,7 +178,7 @@ function setupRoomListeners() {
 
     questionNumberText.textContent = "Match Over";
     questionText.textContent = data.winnerName ? `${data.winnerName} wins!` : "Match Over";
-    statusText.textContent = data.reason || "The match has ended.";
+    statusText.textContent = "";
 
     customKeypad.hidden = true;
     endButtons.hidden = false;
@@ -189,15 +189,6 @@ function setupRoomListeners() {
     submitAnswerBtn.disabled = true;
     attackBtn.disabled = true;
     shieldBtn.disabled = true;
-
-    playAgainBtn.addEventListener("pointerdown", () => {
-      if (!room) return;
-      room.send("playAgain");
-    });
-
-    backToLobbyBtn.addEventListener("pointerdown", () => {
-      showScreen("lobbyScreen");
-    });
   });
 
   room.onLeave(() => {
@@ -287,7 +278,11 @@ shieldBtn.addEventListener("pointerdown", (event) => {
   backToLobbyBtn.addEventListener("pointerdown", (event) => {
     event.preventDefault();
 
-    showScreen("lobbyScreen");
+    showScreen("joinScreen");
+
+    joinBtn.disabled = false;
+    joinStatus.textContent = "";
+    roomInput.value = "";
   });
 
 });
