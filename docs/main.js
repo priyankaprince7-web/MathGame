@@ -116,7 +116,7 @@ function setupRoomListeners() {
 
   if (me) {
     // ATTACK: 10-point bar
-    const attackPercent = Math.min(me.storedDamage, 10) * 10;
+    const attackPercent = Math.min(me.storedDamage, 20) * 5;
     attackFill.style.clipPath = `inset(0 ${100 - attackPercent}% 0 0)`;
 
     // SHIELD:

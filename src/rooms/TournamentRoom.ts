@@ -125,6 +125,7 @@ export class TournamentRoom extends Room {
       }
 
       player.shieldCharge = 0;
+      player.storedDamage = Math.max(0, player.storedDamage - 5);
       player.shieldUntil = Date.now() + 5000;
 
       client.send("statusMessage", "Shield active for 5 seconds!");
@@ -186,7 +187,7 @@ export class TournamentRoom extends Room {
       player.name = role === "host" ? "Host" : "Joining...";
       player.role = role;
       player.connected = true;
-      player.health = 10;
+      player.health = 20;
       player.storedDamage = 0;
       player.shieldUntil = 0;
       player.questionIndex = 0;
