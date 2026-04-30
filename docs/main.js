@@ -28,6 +28,14 @@ const keypadButtons = document.querySelectorAll(".keypadBtn");
 
 shieldBtn.classList.add("notReady");
 
+document.addEventListener("touchmove", (e) => {
+  e.preventDefault();
+}, { passive: false });
+
+document.addEventListener("wheel", (e) => {
+  e.preventDefault();
+}, { passive: false });
+
 function showScreen(screenId) {
   joinScreen.hidden = true;
   lobbyScreen.hidden = true;

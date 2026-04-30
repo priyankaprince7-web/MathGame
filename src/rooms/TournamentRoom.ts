@@ -54,7 +54,7 @@ export class TournamentRoom extends Room {
       this.state.timeRemainingMs = this.matchDurationMs;
 
       for (const player of players) {
-        player.health = 10;
+        player.health = 20;
         player.storedDamage = 0;
         player.shieldUntil = 0;
         player.questionIndex = 0;
