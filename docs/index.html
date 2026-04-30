@@ -176,20 +176,24 @@
 
     #attackFill {
       position: absolute;
-      left: 0;
-      top: 0;
-      height: 100%;
+      left: 8px;
+      top: 12px;
+      height: 56px;
       width: 0%;
 
-      background-image: url("./assets/Button_sprite_filled.png");
-      background-size: 100% 100%;
-      background-repeat: no-repeat;
-      background-position: left center;
+      background:
+        repeating-linear-gradient(
+          105deg,
+          #16c7ff 0px,
+          #16c7ff 9px,
+          transparent 9px,
+          transparent 16px
+        );
 
       z-index: 1;
       pointer-events: none;
 
-      transition: width 0.12s ease-out;
+      transition: width 0.15s ease-out;
     }
 
     .attackText {
@@ -201,6 +205,10 @@
       font-family: inherit;
       line-height: 80px;
       pointer-events: none;
+    }
+
+    .attackKey:active {
+      transform: scale(0.97);
     }
 
     .keypadBtn,
@@ -286,6 +294,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@colyseus/sdk@0.17.41/dist/colyseus.js"></script>
-  <script src="./main.js?v=9999"></script>
+  <script src="./main.js?v=10000"></script>
 </body>
 </html>
