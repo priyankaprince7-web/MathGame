@@ -147,12 +147,12 @@
     }
 
     .submitKey {
-      background-image: url("./assets/Button_sprite_empty.png");
+      background-image: url("./assets/Keypad_sprite_empty.png");
       font-size: 28px;
     }
 
     .submitKey:active {
-      background-image: url("./assets/Button_sprite_filled.png");
+      background-image: url("./assets/Keypad_sprite_filled.png");
     }
 
     /* ---------- ATTACK BUTTON ---------- */
@@ -163,16 +163,45 @@
       max-width: none;
       margin: 0;
       padding: 0;
-      font-size: 34px;
-      font-weight: bold;
+      border: none;
+
+      position: relative;
+      overflow: hidden;
+
+      background: transparent;
       background-image: url("./assets/Button_sprite_empty.png");
       background-size: 100% 100%;
       background-repeat: no-repeat;
-      border: none;
+    }
+
+    #attackFill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 0%;
+
+      background-image: url("./assets/Button_sprite_filled.png");
+      background-size: auto 100%;
+      background-repeat: no-repeat;
+      background-position: left center;
+
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .attackText {
+      position: relative;
+      z-index: 2;
+
+      font-size: 34px;
+      font-weight: bold;
+      font-family: inherit;
+      line-height: 80px;
+      pointer-events: none;
     }
 
     .attackKey:active {
-      background-image: url("./assets/Button_sprite_filled.png");
       transform: scale(0.97);
     }
 
@@ -180,6 +209,11 @@
     #submitAnswerBtn {
       display: none;
     }
+
+    #damageBox {
+      display: none;
+    }
+
   </style>
 </head>
 
@@ -230,7 +264,10 @@
       <button class="keypadBtn" data-key="0">0</button>
       <button class="keypadBtn submitKey" data-key="submit">OK</button>
 
-      <button id="attackBtn" class="attackKey">ATTACK</button>
+      <button id="attackBtn" class="attackKey">
+        <span id="attackFill"></span>
+        <span class="attackText">ATTACK</span>
+      </button>
     </div>
 
     <button id="submitAnswerBtn">Submit Answer</button>

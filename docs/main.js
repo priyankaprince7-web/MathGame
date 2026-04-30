@@ -19,6 +19,7 @@ const answerInput = document.getElementById("answerInput");
 const submitAnswerBtn = document.getElementById("submitAnswerBtn");
 const damageBox = document.getElementById("damageBox");
 const attackBtn = document.getElementById("attackBtn");
+const attackFill = document.getElementById("attackFill");
 const statusText = document.getElementById("statusText");
 
 const keypadButtons = document.querySelectorAll(".keypadBtn");
@@ -101,9 +102,12 @@ function setupRoomListeners() {
 
     const me = state.players.find((p) => p.id === room.sessionId);
 
-    if (me) {
-      damageBox.textContent = "Stored Damage: " + me.storedDamage;
-    }
+  if (me) {
+    damageBox.textContent = "Stored Damage: " + me.storedDamage;
+
+    const fillPercent = Math.min(me.storedDamage, 10) * 10;
+    attackFill.style.width = fillPercent + "%";
+  }
   });
 
   room.onMessage("attackResult", (data) => {
