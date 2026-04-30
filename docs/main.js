@@ -118,12 +118,16 @@ function setupRoomListeners() {
 
     const me = state.players.find((p) => p.id === room.sessionId);
 
-    if (me) {
-      const segments = Math.min(me.storedDamage, 10); // 0–10
-      const fillPercent = segments * 10;              // 0–100 in steps
+  if (me) {
+    let fillPercent = Math.min(me.storedDamage, 10) * 10;
 
-      attackFill.style.width = fillPercent + "%";
+    // makes 9 damage look almost full, but keeps 10 exactly full
+    if (me.storedDamage > 0 && me.storedDamage < 10) {
+      fillPercent += 6;
     }
+
+    attackFill.style.width = Math.min(fillPercent, 100) + "%";
+  }
   });
 
   room.onMessage("attackResult", (data) => {

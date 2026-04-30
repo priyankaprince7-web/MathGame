@@ -182,12 +182,14 @@
       width: 0%;
 
       background-image: url("./assets/Button_sprite_filled.png");
-      background-size: calc(100% / 10) 100%; /* THIS is key */
-      background-repeat: repeat-x;
+      background-size: auto 100%;
+      background-repeat: no-repeat;
       background-position: left center;
 
       z-index: 1;
       pointer-events: none;
+
+      transition: width 0.12s ease-out;
     }
 
     .attackText {
