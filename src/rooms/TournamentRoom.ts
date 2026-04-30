@@ -8,6 +8,17 @@ type Question = {
   answer: number;
 };
 
+function makeRoomCode(length = 5) {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+
+  for (let i = 0; i < length; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+
+  return code;
+}
+
 export class TournamentRoom extends Room {
   maxClients = 3;
   state = new TournamentState();
@@ -21,6 +32,7 @@ export class TournamentRoom extends Room {
   matchTimeout: NodeJS.Timeout | null = null;
 
   onCreate() {
+    this.roomId = makeRoomCode();
     this.state.roomCode = this.roomId;
     this.state.status = "lobby";
     this.state.timeRemainingMs = 0;
@@ -40,44 +52,11 @@ export class TournamentRoom extends Room {
     });
 
     this.onMessage("startGame", () => {
-      const players = this.getPlayers();
+      this.startMatch();
+    });
 
-      if (players.length !== 2) {
-        this.broadcastStatus("Need exactly 2 players to start");
-        return;
-      }
-
-      this.gameStarted = true;
-      this.state.status = "in_match";
-      this.questionDeck = this.generateQuestionDeck(100);
-      this.matchEndsAt = Date.now() + this.matchDurationMs;
-      this.state.timeRemainingMs = this.matchDurationMs;
-
-      for (const player of players) {
-        player.health = 20;
-        player.storedDamage = 0;
-        player.shieldUntil = 0;
-        player.questionIndex = 0;
-        player.shieldCharge = 0;
-      }
-
-      this.clearTimers();
-
-      this.timerInterval = setInterval(() => {
-        this.state.timeRemainingMs = Math.max(0, this.matchEndsAt - Date.now());
-        this.broadcastGameState();
-      }, 1000);
-
-      this.matchTimeout = setTimeout(() => {
-        this.endMatchByTime();
-      }, this.matchDurationMs);
-
-      this.broadcast("gameStarted");
-      this.broadcastPlayers();
-      this.broadcastGameState();
-      this.sendQuestionsToPlayers();
-      this.broadcastStatus("Match started");
-      console.log("Game started");
+    this.onMessage("playAgain", () => {
+      this.startMatch();
     });
 
     this.onMessage("submitAnswer", (client, message: { answer: string | number }) => {
@@ -92,13 +71,13 @@ export class TournamentRoom extends Room {
       const submitted = Number(message.answer);
 
       if (submitted === currentQuestion.answer) {
-        player.storedDamage += 2;
+        player.storedDamage = Math.min(player.storedDamage + 2, 20);
         player.shieldCharge = Math.min(player.shieldCharge + 1, 5);
         player.questionIndex += 1;
 
         client.send("answerFeedback", {
           correct: true,
-          message: "Correct! +1 charge"
+          message: "Correct!"
         });
 
         this.sendQuestionToPlayer(client, player);
@@ -176,6 +155,48 @@ export class TournamentRoom extends Room {
     });
   }
 
+  startMatch() {
+    const players = this.getPlayers();
+
+    if (players.length !== 2) {
+      this.broadcastStatus("Need exactly 2 players to start");
+      return;
+    }
+
+    this.gameStarted = true;
+    this.state.status = "in_match";
+    this.questionDeck = this.generateQuestionDeck(100);
+    this.matchEndsAt = Date.now() + this.matchDurationMs;
+    this.state.timeRemainingMs = this.matchDurationMs;
+
+    for (const player of players) {
+      player.health = 20;
+      player.storedDamage = 0;
+      player.shieldUntil = 0;
+      player.questionIndex = 0;
+      player.shieldCharge = 0;
+    }
+
+    this.clearTimers();
+
+    this.timerInterval = setInterval(() => {
+      this.state.timeRemainingMs = Math.max(0, this.matchEndsAt - Date.now());
+      this.broadcastGameState();
+    }, 1000);
+
+    this.matchTimeout = setTimeout(() => {
+      this.endMatchByTime();
+    }, this.matchDurationMs);
+
+    this.broadcast("gameStarted");
+    this.broadcastPlayers();
+    this.broadcastGameState();
+    this.sendQuestionsToPlayers();
+    this.broadcastStatus("Match started");
+
+    console.log("Game started");
+  }
+
   onJoin(client: Client, options: { role?: Role }) {
     const role: Role = options?.role === "host" ? "host" : "player";
 
@@ -216,7 +237,11 @@ export class TournamentRoom extends Room {
       if (this.gameStarted && wasPlayer) {
         const remainingPlayer = this.getPlayers()[0];
         if (remainingPlayer) {
-          this.endMatch(remainingPlayer, participant, `${name} disconnected. ${remainingPlayer.name} wins`);
+          this.endMatch(
+            remainingPlayer,
+            participant,
+            `${name} disconnected. ${remainingPlayer.name} wins`
+          );
         }
       }
     }
@@ -269,6 +294,7 @@ export class TournamentRoom extends Room {
     for (const client of this.clients) {
       const participant = this.state.players.get(client.sessionId);
       if (!participant || participant.role !== "player") continue;
+
       this.sendQuestionToPlayer(client, participant);
     }
   }

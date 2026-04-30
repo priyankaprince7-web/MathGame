@@ -23,14 +23,14 @@ const shieldBtn = document.getElementById("shieldBtn");
 const attackFill = document.getElementById("attackFill");
 const shieldFill = document.getElementById("shieldFill");
 const statusText = document.getElementById("statusText");
+const customKeypad = document.getElementById("customKeypad");
+const endButtons = document.getElementById("endButtons");
+const playAgainBtn = document.getElementById("playAgainBtn");
+const backToLobbyBtn = document.getElementById("backToLobbyBtn");
 
 const keypadButtons = document.querySelectorAll(".keypadBtn");
 
 shieldBtn.classList.add("notReady");
-
-document.addEventListener("touchmove", (e) => {
-  e.preventDefault();
-}, { passive: false });
 
 document.addEventListener("wheel", (e) => {
   e.preventDefault();
@@ -42,6 +42,12 @@ function showScreen(screenId) {
   gameScreen.hidden = true;
 
   document.getElementById(screenId).hidden = false;
+
+  if (screenId === "joinScreen") {
+    document.body.classList.remove("lockScroll");
+  } else {
+    document.body.classList.add("lockScroll");
+  }
 }
 
 function setStatus(message) {
@@ -89,6 +95,8 @@ function setupRoomListeners() {
   room.onMessage("gameStarted", () => {
     showScreen("gameScreen");
     statusText.textContent = "Game started!";
+    customKeypad.hidden = false;
+    endButtons.hidden = true;
   });
 
   room.onMessage("question", (data) => {
@@ -99,6 +107,9 @@ function setupRoomListeners() {
 
     answerInput.value = "";
     statusText.textContent = "Solve it!";
+
+    customKeypad.hidden = false;
+    endButtons.hidden = true;
   });
 
   room.onMessage("answerFeedback", (data) => {
@@ -165,10 +176,22 @@ function setupRoomListeners() {
     questionText.textContent = data.winnerName ? `${data.winnerName} wins!` : "Match Over";
     statusText.textContent = data.reason || "The match has ended.";
 
+    customKeypad.hidden = true;
+    endButtons.hidden = false;
+
     submitAnswerBtn.disabled = true;
     attackBtn.disabled = true;
     shieldBtn.disabled = true;
     answerInput.disabled = true;
+
+    playAgainBtn.addEventListener("pointerdown", () => {
+      if (!room) return;
+      room.send("playAgain");
+    });
+
+    backToLobbyBtn.addEventListener("pointerdown", () => {
+      showScreen("lobbyScreen");
+    });
   });
 
   room.onLeave(() => {

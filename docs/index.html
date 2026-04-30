@@ -19,15 +19,13 @@
       background: #f7f1dc;
       color: #111;
       text-align: center;
+      overflow: auto;
+      user-select: none;
     }
 
-    html, body {
-      height: 100%;
-      margin: 0;
-      overflow: hidden;              /* disables scroll */
-      overscroll-behavior: none;     /* stops bounce on mobile */
-      touch-action: none;            /* disables swipe scrolling */
-      user-select: none;
+    body.lockScroll {
+      overflow: hidden;
+      touch-action: none;
     }
 
     .screen {
@@ -305,7 +303,12 @@
     <p id="statusText"></p>
   </div>
 
+  <div id="endButtons" hidden>
+    <button id="playAgainBtn">Play Again</button>
+    <button id="backToLobbyBtn">Back to Lobby</button>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@colyseus/sdk@0.17.41/dist/colyseus.js"></script>
-  <script src="./main.js?v=7777"></script>
+  <script src="./main.js?v=7778"></script>
 </body>
 </html>
