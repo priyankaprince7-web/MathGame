@@ -95,6 +95,8 @@ function setupRoomListeners() {
   room.onMessage("gameStarted", () => {
     showScreen("gameScreen");
     statusText.textContent = "Game started!";
+    gameScreen.classList.remove("ended");
+
     customKeypad.hidden = false;
     endButtons.hidden = true;
     answerInput.hidden = false;
@@ -109,6 +111,8 @@ function setupRoomListeners() {
 
     answerInput.value = "";
     statusText.textContent = "Solve it!";
+
+    gameScreen.classList.remove("ended");
 
     customKeypad.hidden = false;
     endButtons.hidden = true;
@@ -176,19 +180,19 @@ function setupRoomListeners() {
   room.onMessage("matchEnded", (data) => {
     showScreen("gameScreen");
 
+    gameScreen.classList.add("ended");
+
     questionNumberText.textContent = "Match Over";
     questionText.textContent = data.winnerName ? `${data.winnerName} wins!` : "Match Over";
-    statusText.textContent = "";
 
     customKeypad.hidden = true;
     endButtons.hidden = false;
-
     answerInput.hidden = true;
-    answerInput.disabled = true;
 
     submitAnswerBtn.disabled = true;
     attackBtn.disabled = true;
     shieldBtn.disabled = true;
+    answerInput.disabled = true;
   });
 
   room.onLeave(() => {

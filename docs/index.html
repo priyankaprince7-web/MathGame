@@ -241,9 +241,15 @@
       display: none;
     }
 
-    #customKeypad[hidden],
-    #endButtons[hidden] {
+    #gameScreen.ended #customKeypad,
+    #gameScreen.ended #answerInput {
       display: none !important;
+    }
+
+    #gameScreen.ended #endButtons {
+      display: flex !important;
+      flex-direction: column;
+      align-items: center;
     }
 
   </style>
@@ -315,6 +321,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@colyseus/sdk@0.17.41/dist/colyseus.js"></script>
-  <script src="./main.js?v=11112"></script>
+  <script src="./main.js?v=120000"></script>
 </body>
 </html>
