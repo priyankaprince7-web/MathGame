@@ -26,6 +26,8 @@ const statusText = document.getElementById("statusText");
 
 const keypadButtons = document.querySelectorAll(".keypadBtn");
 
+shieldBtn.classList.add("notReady");
+
 function showScreen(screenId) {
   joinScreen.hidden = true;
   lobbyScreen.hidden = true;
@@ -117,7 +119,7 @@ function setupRoomListeners() {
     if (me.shieldActive) {
       shieldPercent = Math.max(0, Math.min(me.shieldTimeLeft / 5000, 1)) * 100;
     } else {
-      shieldPercent = Math.min(me.storedDamage, 5) * 20;
+      shieldPercent = Math.min(me.shieldCharge, 5) * 20;
     }
 
     shieldFill.style.clipPath = `inset(0 ${100 - shieldPercent}% 0 0)`;
@@ -126,6 +128,12 @@ function setupRoomListeners() {
       shieldBtn.classList.add("ready");
     } else {
       shieldBtn.classList.remove("ready");
+    }
+
+    if (!me.shieldActive && me.shieldCharge >= 5) {
+      shieldBtn.classList.remove("notReady");
+    } else if (!me.shieldActive) {
+      shieldBtn.classList.add("notReady");
     }
   }
   });
@@ -224,6 +232,10 @@ shieldBtn.addEventListener("pointerdown", (event) => {
   event.preventDefault();
 
   if (!room) return;
+
+  if (shieldBtn.classList.contains("notReady")) {
+    return;
+  }
 
   room.send("shield");
 });

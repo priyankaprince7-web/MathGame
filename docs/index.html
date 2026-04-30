@@ -137,12 +137,12 @@
     }
 
     .submitKey {
-      background-image: url("./assets/Button_sprite_empty.png");
+      background-image: url("./assets/Keypad_sprite_empty.png");
       font-size: 28px;
     }
 
     .submitKey:active {
-      background-image: url("./assets/Button_sprite_filled.png");
+      background-image: url("./assets/Keypad_sprite_filled.png");
     }
 
     .actionRow {
@@ -199,6 +199,11 @@
       transition: clip-path 0.1s linear;
     }
 
+    #shieldBtn.notReady {
+      filter: grayscale(1);
+      opacity: 0.45;
+    }
+
     .actionText {
       position: relative;
       z-index: 2;
@@ -215,6 +220,10 @@
     }
 
     #damageBox {
+      display: none;
+    }
+
+    #statusText {
       display: none;
     }
   </style>

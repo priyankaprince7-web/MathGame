@@ -58,6 +58,7 @@ export class TournamentRoom extends Room {
         player.storedDamage = 0;
         player.shieldUntil = 0;
         player.questionIndex = 0;
+        player.shieldCharge = 0;
       }
 
       this.clearTimers();
@@ -91,7 +92,8 @@ export class TournamentRoom extends Room {
       const submitted = Number(message.answer);
 
       if (submitted === currentQuestion.answer) {
-        player.storedDamage += 1;
+        player.storedDamage += 2;
+        player.shieldCharge = Math.min(player.shieldCharge + 1, 5);
         player.questionIndex += 1;
 
         client.send("answerFeedback", {
@@ -117,12 +119,12 @@ export class TournamentRoom extends Room {
 
       const cost = 5;
 
-      if (player.storedDamage < cost) {
-        client.send("statusMessage", "Need 5 charge for shield");
+      if (player.shieldCharge < cost) {
+        client.send("statusMessage", "Need full shield charge");
         return;
       }
 
-      player.storedDamage -= cost;
+      player.shieldCharge = 0;
       player.shieldUntil = Date.now() + 5000;
 
       client.send("statusMessage", "Shield active for 5 seconds!");
@@ -188,6 +190,7 @@ export class TournamentRoom extends Room {
       player.storedDamage = 0;
       player.shieldUntil = 0;
       player.questionIndex = 0;
+      player.shieldCharge = 0;
 
       this.state.players.set(client.sessionId, player);
     }
@@ -246,7 +249,8 @@ export class TournamentRoom extends Room {
       storedDamage: p.storedDamage,
       shieldActive: p.shieldUntil > now,
       shieldTimeLeft: Math.max(0, p.shieldUntil - now),
-      questionIndex: p.questionIndex
+      questionIndex: p.questionIndex,
+      shieldCharge: p.shieldCharge
     }));
 
     this.broadcast("gameState", {

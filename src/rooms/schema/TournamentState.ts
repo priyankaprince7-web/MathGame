@@ -9,6 +9,7 @@ export class PlayerState extends Schema {
   @type("number") storedDamage: number = 0;
   @type("number") shieldUntil: number = 0;
   @type("number") questionIndex: number = 0;
+  @type("number") shieldCharge: number = 0;
 }
 
 export class TournamentState extends Schema {
