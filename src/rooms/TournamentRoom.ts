@@ -115,17 +115,17 @@ export class TournamentRoom extends Room {
       const player = this.state.players.get(client.sessionId);
       if (!player || player.role !== "player") return;
 
-      const cost = 3;
+      const cost = 5;
 
       if (player.storedDamage < cost) {
-        client.send("statusMessage", "Need 3 charge for shield");
+        client.send("statusMessage", "Need 5 charge for shield");
         return;
       }
 
       player.storedDamage -= cost;
-      player.shieldUntil = Date.now() + 3000;
+      player.shieldUntil = Date.now() + 5000;
 
-      client.send("statusMessage", "Shield active for 3 seconds!");
+      client.send("statusMessage", "Shield active for 5 seconds!");
       this.broadcastGameState();
     });
 

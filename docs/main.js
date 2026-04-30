@@ -104,18 +104,30 @@ function setupRoomListeners() {
 
     const me = state.players.find((p) => p.id === room.sessionId);
 
-    if (me) {
-      damageBox.textContent = "Stored Damage: " + me.storedDamage;
+  if (me) {
+    // ATTACK: 10-point bar
+    const attackPercent = Math.min(me.storedDamage, 10) * 10;
+    attackFill.style.clipPath = `inset(0 ${100 - attackPercent}% 0 0)`;
 
-      const attackPercent = Math.min(me.storedDamage, 10) * 10;
-      attackFill.style.width = attackPercent + "%";
+    // SHIELD:
+    // inactive = charges in 5ths based on storedDamage
+    // active = drains over 5 seconds
+    let shieldPercent = 0;
 
-      const shieldPercent = me.shieldActive
-        ? Math.max(0, Math.min(me.shieldTimeLeft / 3000, 1)) * 100
-        : 0;
-
-      shieldFill.style.width = shieldPercent + "%";
+    if (me.shieldActive) {
+      shieldPercent = Math.max(0, Math.min(me.shieldTimeLeft / 5000, 1)) * 100;
+    } else {
+      shieldPercent = Math.min(me.storedDamage, 5) * 20;
     }
+
+    shieldFill.style.clipPath = `inset(0 ${100 - shieldPercent}% 0 0)`;
+
+    if (!me.shieldActive && me.storedDamage >= 5) {
+      shieldBtn.classList.add("ready");
+    } else {
+      shieldBtn.classList.remove("ready");
+    }
+  }
   });
 
   room.onMessage("attackResult", (data) => {
