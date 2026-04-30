@@ -36,6 +36,20 @@ document.addEventListener("wheel", (e) => {
   e.preventDefault();
 }, { passive: false });
 
+document.querySelectorAll("button").forEach(btn => {
+  btn.addEventListener("pointerdown", () => {
+    btn.classList.add("pressed");
+  });
+
+  btn.addEventListener("pointerup", () => {
+    btn.classList.remove("pressed");
+  });
+
+  btn.addEventListener("pointerleave", () => {
+    btn.classList.remove("pressed");
+  });
+});
+
 function showScreen(screenId) {
   joinScreen.hidden = true;
   lobbyScreen.hidden = true;

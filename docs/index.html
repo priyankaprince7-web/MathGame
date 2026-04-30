@@ -95,9 +95,15 @@
       font-weight: bold;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-image: url("./assets/Button_sprite_filled.png");
     }
 
     button:active {
+      background-image: url("./assets/Button_sprite_filled.png");
       transform: scale(0.96);
     }
 
@@ -143,6 +149,10 @@
       padding: 0;
       background-image: url("./assets/Keypad_sprite_empty.png");
       font-size: 32px;
+    }
+
+    .keypadBtn:hover {
+      background-image: url("./assets/Keypad_sprite_filled.png");
     }
 
     .keypadBtn:active {
@@ -252,6 +262,15 @@
       align-items: center;
     }
 
+    button.pressed {
+      background-image: url("./assets/Button_sprite_filled.png");
+      transform: scale(0.96);
+    }
+
+    .keypadBtn.pressed {
+      background-image: url("./assets/Keypad_sprite_filled.png");
+    }
+
   </style>
 </head>
 
@@ -321,6 +340,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@colyseus/sdk@0.17.41/dist/colyseus.js"></script>
-  <script src="./main.js?v=120000"></script>
+  <script src="./main.js?v=121111"></script>
 </body>
 </html>
