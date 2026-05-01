@@ -131,20 +131,20 @@
 
     #customKeypad {
       display: grid;
-      grid-template-columns: repeat(3, 90px);
-      gap: 14px;
+      grid-template-columns: repeat(3, 78px);
+      gap: 10px;
       justify-content: center;
-      margin: 18px 0;
+      margin: 12px 0;
     }
 
     .keypadBtn {
-      width: 90px;
-      height: 70px;
+      width: 78px;
+      height: 60px;
       max-width: none;
       margin: 0;
       padding: 0;
       background-image: url("./assets/Keypad_sprite_empty.png");
-      font-size: 32px;
+      font-size: 28px;
     }
 
     .keypadBtn:active {
@@ -170,7 +170,7 @@
 
     .actionBtn {
       flex: 1;
-      height: 70px;
+      height: 60px;
       max-width: none;
       margin: 0;
       padding: 0;
@@ -183,7 +183,7 @@
       background-size: 100% 100%;
       background-repeat: no-repeat;
 
-      font-size: 24px;
+      font-size: 22px;
       font-weight: bold;
     }
 
@@ -223,7 +223,7 @@
     .actionText {
       position: relative;
       z-index: 2;
-      line-height: 70px;
+      line-height: 60px;
       pointer-events: none;
     }
 
@@ -284,6 +284,45 @@
       }
     }
 
+    #healthPanel {
+      width: 90%;
+      max-width: 330px;
+      margin-bottom: 8px;
+    }
+
+    .healthBlock {
+      margin: 6px 0;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .healthBar {
+      width: 100%;
+      height: 26px;
+      position: relative;
+      overflow: hidden;
+
+      background-image: url("./assets/Button_sprite_empty.png");
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+    }
+
+    .healthFill {
+      height: 100%;
+      width: 100%;
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      transition: width 0.2s ease-out;
+    }
+
+    .myHealthFill {
+      background-image: url("./assets/shield_filled.png");
+    }
+
+    .opponentHealthFill {
+      background-image: url("./assets/attack_filled.png");
+    }
+
   </style>
 </head>
 
@@ -306,6 +345,22 @@
   </div>
 
   <div id="gameScreen" class="screen" hidden>
+    <div id="healthPanel">
+      <div class="healthBlock">
+        <div id="myHealthLabel">Your Health</div>
+        <div class="healthBar">
+          <div id="myHealthFill" class="healthFill myHealthFill"></div>
+        </div>
+      </div>
+
+      <div class="healthBlock">
+        <div id="opponentHealthLabel">Opponent Health</div>
+        <div class="healthBar">
+          <div id="opponentHealthFill" class="healthFill opponentHealthFill"></div>
+        </div>
+      </div>
+    </div>
+
     <h2 id="questionNumberText">Question</h2>
     <div id="questionText">Waiting...</div>
 

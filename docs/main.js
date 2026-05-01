@@ -28,6 +28,11 @@ const endButtons = document.getElementById("endButtons");
 const playAgainBtn = document.getElementById("playAgainBtn");
 const backToLobbyBtn = document.getElementById("backToLobbyBtn");
 
+const myHealthLabel = document.getElementById("myHealthLabel");
+const opponentHealthLabel = document.getElementById("opponentHealthLabel");
+const myHealthFill = document.getElementById("myHealthFill");
+const opponentHealthFill = document.getElementById("opponentHealthFill");
+
 const keypadButtons = document.querySelectorAll(".keypadBtn");
 
 document.addEventListener("wheel", (e) => {
@@ -148,6 +153,7 @@ function setupRoomListeners() {
     if (!state || !state.players || !room) return;
 
     const me = state.players.find((p) => p.id === room.sessionId);
+    const opponent = state.players.find((p) => p.id !== room.sessionId);
 
   if (me) {
     const attackPercent = Math.min(me.storedDamage, 10) * 10;
@@ -161,18 +167,25 @@ function setupRoomListeners() {
     } else {
       healBtn.classList.add("notReady");
     }
+
+    myHealthLabel.textContent = "Your Health";
+    myHealthFill.style.width = Math.max(0, Math.min(me.health, 20)) * 5 + "%";
   }
   });
 
+  if (opponent) {
+    opponentHealthLabel.textContent = opponent.name + " Health";
+    opponentHealthFill.style.width = Math.max(0, Math.min(opponent.health, 20)) * 5 + "%";
+  } else {
+    opponentHealthLabel.textContent = "Opponent Health";
+    opponentHealthFill.style.width = "0%";
+  }
+
   room.onMessage("attackResult", (data) => {
     if (data.attackerId === room.sessionId) {
-      statusText.textContent = data.blocked
-        ? `You attacked for ${data.damage} damage, but shield reduced it!`
-        : `You attacked for ${data.damage} damage!`;
+      statusText.textContent = `You attacked for ${data.damage} damage!`;
     } else if (data.defenderId === room.sessionId) {
-      statusText.textContent = data.blocked
-        ? `${data.attackerName} attacked, but your shield reduced it to ${data.damage}!`
-        : `${data.attackerName} attacked you for ${data.damage} damage!`;
+      statusText.textContent = `${data.attackerName} attacked you for ${data.damage} damage!`;
     }
   });
 
