@@ -235,8 +235,14 @@
       pointer-events: none;
     }
 
-    .actionBtn:active {
+    .actionBtn:active,
+    .actionBtn.pressed {
       transform: scale(0.96);
+      background-image: url("./assets/Button_sprite_empty.png");
+    }
+
+    .actionBtn:hover {
+      background-image: url("./assets/Button_sprite_empty.png");
     }
 
     #submitAnswerBtn {
@@ -340,6 +346,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@colyseus/sdk@0.17.41/dist/colyseus.js"></script>
-  <script src="./main.js?v=122222"></script>
+  <script src="./main.js?v=123333"></script>
 </body>
 </html>

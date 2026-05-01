@@ -42,7 +42,7 @@ document.querySelectorAll("button").forEach((btn) => {
 
     setTimeout(() => {
       btn.classList.remove("pressed");
-    }, 120);
+    }, 100);
   });
 
   btn.addEventListener("pointerup", () => {
@@ -50,10 +50,6 @@ document.querySelectorAll("button").forEach((btn) => {
   });
 
   btn.addEventListener("pointercancel", () => {
-    btn.classList.remove("pressed");
-  });
-
-  btn.addEventListener("pointerleave", () => {
     btn.classList.remove("pressed");
   });
 });
