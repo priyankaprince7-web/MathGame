@@ -29,20 +29,17 @@
     }
 
     .screen {
-      position: fixed;   /* instead of normal flow */
+      position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-
       padding: 24px;
       box-sizing: border-box;
-
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-
       background-color: #fffdf2;
       background-image:
         linear-gradient(#b7d8ff 1px, transparent 1px),
@@ -62,6 +59,7 @@
 
     h2 {
       font-size: 34px;
+      margin: 8px 0;
     }
 
     input {
@@ -125,8 +123,46 @@
     }
 
     #questionText {
-      font-size: 52px;
-      margin: 28px 0;
+      font-size: 42px;
+      margin: 10px 0;
+    }
+
+    #healthPanel {
+      width: 90%;
+      max-width: 330px;
+      margin: 4px 0 8px 0;
+    }
+
+    .healthBlock {
+      margin: 4px 0;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .healthBar {
+      width: 100%;
+      height: 24px;
+      position: relative;
+      overflow: hidden;
+      background-image: url("./assets/Button_sprite_empty.png");
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+    }
+
+    .healthFill {
+      height: 100%;
+      width: 100%;
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      transition: width 0.2s ease-out;
+    }
+
+    .myHealthFill {
+      background-image: url("./assets/shield_filled.png");
+    }
+
+    .opponentHealthFill {
+      background-image: url("./assets/attack_filled.png");
     }
 
     #customKeypad {
@@ -177,12 +213,10 @@
       border: none;
       position: relative;
       overflow: hidden;
-
       background: transparent;
       background-image: url("./assets/Button_sprite_empty.png");
       background-size: 100% 100%;
       background-repeat: no-repeat;
-
       font-size: 22px;
       font-weight: bold;
     }
@@ -199,10 +233,6 @@
       z-index: 1;
       pointer-events: none;
       clip-path: inset(0 100% 0 0);
-    }
-
-    .healBtn.ready {
-      transform: scale(1.03);
     }
 
     #attackFill {
@@ -237,14 +267,8 @@
       background-image: url("./assets/Button_sprite_empty.png");
     }
 
-    #submitAnswerBtn {
-      display: none;
-    }
-
-    #damageBox {
-      display: none;
-    }
-
+    #submitAnswerBtn,
+    #damageBox,
     #statusText {
       display: none;
     }
@@ -284,46 +308,6 @@
         background-image: url("./assets/Button_sprite_empty.png");
       }
     }
-
-    #healthPanel {
-      width: 90%;
-      max-width: 330px;
-      margin-bottom: 8px;
-    }
-
-    .healthBlock {
-      margin: 6px 0;
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    .healthBar {
-      width: 100%;
-      height: 26px;
-      position: relative;
-      overflow: hidden;
-
-      background-image: url("./assets/Button_sprite_empty.png");
-      background-size: 100% 100%;
-      background-repeat: no-repeat;
-    }
-
-    .healthFill {
-      height: 100%;
-      width: 100%;
-      background-size: 100% 100%;
-      background-repeat: no-repeat;
-      transition: width 0.2s ease-out;
-    }
-
-    .myHealthFill {
-      background-image: url("./assets/shield_filled.png");
-    }
-
-    .opponentHealthFill {
-      background-image: url("./assets/attack_filled.png");
-    }
-
   </style>
 </head>
 
@@ -345,7 +329,7 @@
     <p id="lobbyStatus">Connected. Waiting for the host to start.</p>
   </div>
 
-    <div id="gameScreen" class="screen" hidden></div>
+  <div id="gameScreen" class="screen" hidden>
     <h2 id="questionNumberText">Question</h2>
     <div id="questionText">Waiting...</div>
 
@@ -404,11 +388,10 @@
 
     <button id="submitAnswerBtn">Submit Answer</button>
     <div id="damageBox">Stored Damage: 0</div>
-
     <p id="statusText"></p>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@colyseus/sdk@0.17.41/dist/colyseus.js"></script>
-  <script src="./main.js?v=128888"></script>
+  <script src="./main.js?v=130000"></script>
 </body>
 </html>
