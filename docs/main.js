@@ -288,29 +288,28 @@ shieldBtn.addEventListener("pointerdown", (event) => {
   }
 
   room.send("shield");
+});
 
-  playAgainBtn.addEventListener("click", () => {
-    if (!room) return;
+playAgainBtn.addEventListener("click", () => {
+  if (!room) return;
 
-    gameScreen.classList.remove("ended");
+  gameScreen.classList.remove("ended");
 
-    customKeypad.hidden = false;
-    endButtons.hidden = true;
-    answerInput.hidden = false;
-    answerInput.disabled = false;
+  customKeypad.hidden = false;
+  endButtons.hidden = true;
+  answerInput.hidden = false;
+  answerInput.disabled = false;
 
-    room.send("playAgain");
-  });
+  room.send("playAgain");
+});
 
-  backToLobbyBtn.addEventListener("click", () => {
-    showScreen("joinScreen");
+backToLobbyBtn.addEventListener("click", () => {
+  showScreen("joinScreen");
 
-    gameScreen.classList.remove("ended");
+  gameScreen.classList.remove("ended");
 
-    joinBtn.disabled = false;
-    joinStatus.textContent = "";
-    lobbyStatus.textContent = "Connected. Waiting for the host to start.";
-    roomInput.value = "";
-  });
-
+  joinBtn.disabled = false;
+  joinStatus.textContent = "";
+  lobbyStatus.textContent = "Connected. Waiting for the host to start.";
+  roomInput.value = "";
 });

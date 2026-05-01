@@ -98,10 +98,6 @@
       cursor: pointer;
     }
 
-    button:hover {
-      background-image: url("./assets/Button_sprite_filled.png");
-    }
-
     button:active {
       background-image: url("./assets/Button_sprite_filled.png");
       transform: scale(0.96);
@@ -149,10 +145,6 @@
       padding: 0;
       background-image: url("./assets/Keypad_sprite_empty.png");
       font-size: 32px;
-    }
-
-    .keypadBtn:hover {
-      background-image: url("./assets/Keypad_sprite_filled.png");
     }
 
     .keypadBtn:active {
@@ -237,8 +229,8 @@
 
     .actionBtn:active,
     .actionBtn.pressed {
-      transform: scale(0.96);
       background-image: url("./assets/Button_sprite_empty.png");
+      transform: scale(0.96);
     }
 
     .actionBtn:hover {
@@ -275,6 +267,21 @@
 
     .keypadBtn.pressed {
       background-image: url("./assets/Keypad_sprite_filled.png");
+      transform: scale(0.94);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      button:hover {
+        background-image: url("./assets/Button_sprite_filled.png");
+      }
+
+      .keypadBtn:hover {
+        background-image: url("./assets/Keypad_sprite_filled.png");
+      }
+
+      .actionBtn:hover {
+        background-image: url("./assets/Button_sprite_empty.png");
+      }
     }
 
   </style>
@@ -346,6 +353,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@colyseus/sdk@0.17.41/dist/colyseus.js"></script>
-  <script src="./main.js?v=123333"></script>
+  <script src="./main.js?v=124444"></script>
 </body>
 </html>
