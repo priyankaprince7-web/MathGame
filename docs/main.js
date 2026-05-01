@@ -157,18 +157,23 @@ function setupRoomListeners() {
 
     if (!me) return;
 
-    // --- YOUR HEALTH ---
-    myHealthLabel.textContent = "Your Health";
-    myHealthFill.style.width = Math.max(0, Math.min(me.health, 20)) * 5 + "%";
+    // --- ATTACK BAR ---
+    const attackPercent = Math.min(me.storedDamage, 10) * 10;
+    attackFill.style.clipPath = `inset(0 ${100 - attackPercent}% 0 0)`;
 
-    // --- OPPONENT HEALTH ---
+    // --- HEAL BAR ---
+    const healPercent = Math.min(me.healCharge, 10) * 10;
+    healFill.style.clipPath = `inset(0 ${100 - healPercent}% 0 0)`;
+
+    // --- HEALTH BARS ---
+    myHealthFill.style.width = Math.min(me.health, 20) * 5 + "%";
+
     if (opponent) {
+      opponentHealthFill.style.width = Math.min(opponent.health, 20) * 5 + "%";
       opponentHealthLabel.textContent = opponent.name + " Health";
-      opponentHealthFill.style.width = Math.max(0, Math.min(opponent.health, 20)) * 5 + "%";
     } else {
-      // WAITING STATE (no errors)
-      opponentHealthLabel.textContent = "Waiting for opponent...";
       opponentHealthFill.style.width = "0%";
+      opponentHealthLabel.textContent = "Waiting for opponent...";
     }
   });
 
