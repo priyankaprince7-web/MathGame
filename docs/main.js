@@ -172,14 +172,6 @@ function setupRoomListeners() {
     }
   });
 
-  if (opponent) {
-    opponentHealthLabel.textContent = opponent.name + " Health";
-    opponentHealthFill.style.width = Math.max(0, Math.min(opponent.health, 20)) * 5 + "%";
-  } else {
-    opponentHealthLabel.textContent = "Opponent Health";
-    opponentHealthFill.style.width = "0%";
-  }
-
   room.onMessage("attackResult", (data) => {
     if (data.attackerId === room.sessionId) {
       statusText.textContent = `You attacked for ${data.damage} damage!`;
