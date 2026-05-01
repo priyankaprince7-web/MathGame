@@ -125,6 +125,11 @@ export class TournamentRoom extends Room {
       const defender = this.getOpponent(attacker.id);
       if (!defender) return;
 
+      this.broadcast("attackUsed", {
+        attackerId: attacker.id,
+        defenderId: defender.id
+      });
+
       let damage = attacker.storedDamage;
       attacker.storedDamage = 0;
 
