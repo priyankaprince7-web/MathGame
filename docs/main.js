@@ -155,22 +155,21 @@ function setupRoomListeners() {
     const me = state.players.find((p) => p.id === room.sessionId);
     const opponent = state.players.find((p) => p.id !== room.sessionId);
 
-  if (me) {
-    const attackPercent = Math.min(me.storedDamage, 10) * 10;
-    attackFill.style.clipPath = `inset(0 ${100 - attackPercent}% 0 0)`;
+    if (!me) return;
 
-    const healPercent = Math.min(me.healCharge, 10) * 10;
-    healFill.style.clipPath = `inset(0 ${100 - healPercent}% 0 0)`;
-
-    if (me.healCharge > 0 && me.health < 20) {
-      healBtn.classList.remove("notReady");
-    } else {
-      healBtn.classList.add("notReady");
-    }
-
+    // --- YOUR HEALTH ---
     myHealthLabel.textContent = "Your Health";
     myHealthFill.style.width = Math.max(0, Math.min(me.health, 20)) * 5 + "%";
-  }
+
+    // --- OPPONENT HEALTH ---
+    if (opponent) {
+      opponentHealthLabel.textContent = opponent.name + " Health";
+      opponentHealthFill.style.width = Math.max(0, Math.min(opponent.health, 20)) * 5 + "%";
+    } else {
+      // WAITING STATE (no errors)
+      opponentHealthLabel.textContent = "Waiting for opponent...";
+      opponentHealthFill.style.width = "0%";
+    }
   });
 
   if (opponent) {
