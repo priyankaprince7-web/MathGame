@@ -19,9 +19,9 @@ const answerInput = document.getElementById("answerInput");
 const submitAnswerBtn = document.getElementById("submitAnswerBtn");
 const damageBox = document.getElementById("damageBox");
 const attackBtn = document.getElementById("attackBtn");
-const shieldBtn = document.getElementById("shieldBtn");
+const healBtn = document.getElementById("healBtn");
+const healFill = document.getElementById("healFill");
 const attackFill = document.getElementById("attackFill");
-const shieldFill = document.getElementById("shieldFill");
 const statusText = document.getElementById("statusText");
 const customKeypad = document.getElementById("customKeypad");
 const endButtons = document.getElementById("endButtons");
@@ -29,8 +29,6 @@ const playAgainBtn = document.getElementById("playAgainBtn");
 const backToLobbyBtn = document.getElementById("backToLobbyBtn");
 
 const keypadButtons = document.querySelectorAll(".keypadBtn");
-
-shieldBtn.classList.add("notReady");
 
 document.addEventListener("wheel", (e) => {
   e.preventDefault();
@@ -152,33 +150,16 @@ function setupRoomListeners() {
     const me = state.players.find((p) => p.id === room.sessionId);
 
   if (me) {
-    // ATTACK: 10-point bar
-    const attackPercent = Math.min(me.storedDamage, 20) * 5;
+    const attackPercent = Math.min(me.storedDamage, 10) * 10;
     attackFill.style.clipPath = `inset(0 ${100 - attackPercent}% 0 0)`;
 
-    // SHIELD:
-    // inactive = charges in 5ths based on storedDamage
-    // active = drains over 5 seconds
-    let shieldPercent = 0;
+    const healPercent = Math.min(me.healCharge, 10) * 10;
+    healFill.style.clipPath = `inset(0 ${100 - healPercent}% 0 0)`;
 
-    if (me.shieldActive) {
-      shieldPercent = Math.max(0, Math.min(me.shieldTimeLeft / 5000, 1)) * 100;
+    if (me.healCharge > 0 && me.health < 20) {
+      healBtn.classList.remove("notReady");
     } else {
-      shieldPercent = Math.min(me.shieldCharge, 5) * 20;
-    }
-
-    shieldFill.style.clipPath = `inset(0 ${100 - shieldPercent}% 0 0)`;
-
-    if (!me.shieldActive && me.storedDamage >= 5) {
-      shieldBtn.classList.add("ready");
-    } else {
-      shieldBtn.classList.remove("ready");
-    }
-
-    if (!me.shieldActive && me.shieldCharge >= 5) {
-      shieldBtn.classList.remove("notReady");
-    } else if (!me.shieldActive) {
-      shieldBtn.classList.add("notReady");
+      healBtn.classList.add("notReady");
     }
   }
   });
@@ -209,7 +190,7 @@ function setupRoomListeners() {
 
     submitAnswerBtn.disabled = true;
     attackBtn.disabled = true;
-    shieldBtn.disabled = true;
+    healBtn.disabled = true;
     answerInput.disabled = true;
   });
 
@@ -278,16 +259,16 @@ attackBtn.addEventListener("pointerdown", (event) => {
   statusText.textContent = "Attack sent!";
 });
 
-shieldBtn.addEventListener("pointerdown", (event) => {
+healBtn.addEventListener("pointerdown", (event) => {
   event.preventDefault();
 
   if (!room) return;
 
-  if (shieldBtn.classList.contains("notReady")) {
+  if (healBtn.classList.contains("notReady")) {
     return;
   }
 
-  room.send("shield");
+  room.send("heal");
 });
 
 playAgainBtn.addEventListener("click", () => {

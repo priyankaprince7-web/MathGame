@@ -71,8 +71,8 @@ export class TournamentRoom extends Room {
       const submitted = Number(message.answer);
 
       if (submitted === currentQuestion.answer) {
-        player.storedDamage = Math.min(player.storedDamage + 2, 20);
-        player.shieldCharge = Math.min(player.shieldCharge + 1, 5);
+        player.storedDamage = Math.min(player.storedDamage + 1, 10);
+        player.healCharge = Math.min(player.healCharge + 1, 10);
         player.questionIndex += 1;
 
         client.send("answerFeedback", {
@@ -90,24 +90,21 @@ export class TournamentRoom extends Room {
       }
     });
 
-    this.onMessage("shield", (client) => {
+    this.onMessage("heal", (client) => {
       if (!this.gameStarted) return;
 
       const player = this.state.players.get(client.sessionId);
       if (!player || player.role !== "player") return;
 
-      const cost = 5;
-
-      if (player.shieldCharge < cost) {
-        client.send("statusMessage", "Need full shield charge");
+      if (player.healCharge <= 0) {
+        client.send("statusMessage", "No health charge to use");
         return;
       }
 
-      player.shieldCharge = 0;
-      player.storedDamage = Math.max(0, player.storedDamage - 5);
-      player.shieldUntil = Date.now() + 5000;
+      player.health = Math.min(20, player.health + player.healCharge);
+      player.healCharge = 0;
 
-      client.send("statusMessage", "Shield active for 5 seconds!");
+      client.send("statusMessage", "Health increased!");
       this.broadcastGameState();
     });
 
@@ -118,28 +115,15 @@ export class TournamentRoom extends Room {
       if (!attacker || attacker.role !== "player") return;
 
       if (attacker.storedDamage <= 0) {
-        client.send("statusMessage", "No stored damage to use");
+        client.send("statusMessage", "No attack charge to use");
         return;
       }
 
       const defender = this.getOpponent(attacker.id);
       if (!defender) return;
 
-      this.broadcast("attackUsed", {
-        attackerId: attacker.id,
-        defenderId: defender.id
-      });
-
-      let damage = attacker.storedDamage;
+      const damage = attacker.storedDamage;
       attacker.storedDamage = 0;
-
-      const now = Date.now();
-      let blocked = false;
-
-      if (defender.shieldUntil > now) {
-        damage = Math.ceil(damage / 2);
-        blocked = true;
-      }
 
       defender.health = Math.max(0, defender.health - damage);
 
@@ -148,8 +132,7 @@ export class TournamentRoom extends Room {
         attackerName: attacker.name,
         defenderId: defender.id,
         defenderName: defender.name,
-        damage,
-        blocked
+        damage
       });
 
       this.broadcastGameState();
@@ -177,9 +160,8 @@ export class TournamentRoom extends Room {
     for (const player of players) {
       player.health = 20;
       player.storedDamage = 0;
-      player.shieldUntil = 0;
+      player.healCharge = 0;
       player.questionIndex = 0;
-      player.shieldCharge = 0;
     }
 
     this.clearTimers();
@@ -215,9 +197,8 @@ export class TournamentRoom extends Room {
       player.connected = true;
       player.health = 20;
       player.storedDamage = 0;
-      player.shieldUntil = 0;
+      player.healCharge = 0;
       player.questionIndex = 0;
-      player.shieldCharge = 0;
 
       this.state.players.set(client.sessionId, player);
     }
@@ -271,17 +252,13 @@ export class TournamentRoom extends Room {
       ? Math.max(0, this.matchEndsAt - Date.now())
       : 0;
 
-    const now = Date.now();
-
     const playersOnly = this.getPlayers().map((p) => ({
       id: p.id,
       name: p.name,
       health: p.health,
       storedDamage: p.storedDamage,
-      shieldActive: p.shieldUntil > now,
-      shieldTimeLeft: Math.max(0, p.shieldUntil - now),
-      questionIndex: p.questionIndex,
-      shieldCharge: p.shieldCharge
+      healCharge: p.healCharge,
+      questionIndex: p.questionIndex
     }));
 
     this.broadcast("gameState", {
@@ -359,9 +336,9 @@ export class TournamentRoom extends Room {
     } else if (p2.health < p1.health) {
       this.endMatch(p1, p2, `${p1.name} wins on time`);
     } else if (p1.storedDamage > p2.storedDamage) {
-      this.endMatch(p1, p2, `${p1.name} wins on time by higher stored damage`);
+      this.endMatch(p1, p2, `${p1.name} wins on time by higher attack charge`);
     } else if (p2.storedDamage > p1.storedDamage) {
-      this.endMatch(p2, p1, `${p2.name} wins on time by higher stored damage`);
+      this.endMatch(p2, p1, `${p2.name} wins on time by higher attack charge`);
     } else {
       this.gameStarted = false;
       this.state.status = "finished";
@@ -373,7 +350,7 @@ export class TournamentRoom extends Room {
         winnerName: "Draw",
         loserId: null,
         loserName: "Draw",
-        reason: "Time expired with equal health and equal stored damage"
+        reason: "Time expired with equal health and equal attack charge"
       });
 
       this.broadcastStatus("Match ended in a draw");

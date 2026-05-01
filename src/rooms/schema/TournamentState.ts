@@ -7,11 +7,9 @@ export class PlayerState extends Schema {
   @type("boolean") connected: boolean = true;
   @type("number") health: number = 20;
   @type("number") storedDamage: number = 0;
-  @type("number") shieldUntil: number = 0;
+  @type("number") healCharge: number = 0;
   @type("number") questionIndex: number = 0;
-  @type("number") shieldCharge: number = 0;
 }
-
 export class TournamentState extends Schema {
   @type("string") roomCode: string = "";
   @type("string") status: string = "lobby";

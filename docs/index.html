@@ -188,7 +188,7 @@
     }
 
     #attackFill,
-    #shieldFill {
+    #healFill {
       position: absolute;
       inset: 0;
       width: 100%;
@@ -201,7 +201,7 @@
       clip-path: inset(0 100% 0 0);
     }
 
-    .shieldBtn.ready {
+    .healBtn.ready {
       transform: scale(1.03);
     }
 
@@ -210,12 +210,12 @@
       transition: clip-path 0.15s ease-out;
     }
 
-    #shieldFill {
+    #healFill {
       background-image: url("./assets/shield_filled.png");
       transition: clip-path 0.1s linear;
     }
 
-    #shieldBtn.notReady {
+    #healBtn.notReady {
       filter: grayscale(1);
       opacity: 0.45;
     }
@@ -334,9 +334,9 @@
           <span class="actionText">ATTACK</span>
         </button>
 
-        <button id="shieldBtn" class="actionBtn">
-          <span id="shieldFill"></span>
-          <span class="actionText">SHIELD</span>
+        <button id="healBtn" class="actionBtn">
+          <span id="healFill"></span>
+          <span class="actionText">HEAL</span>
         </button>
       </div>
     </div>
