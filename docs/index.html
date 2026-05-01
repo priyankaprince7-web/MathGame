@@ -321,15 +321,21 @@
 
 <!-- JOIN -->
 <div id="joinScreen" class="screen">
-  <h2>Brain Battle</h2>
-  <input id="nameInput" placeholder="Your name" />
-  <input id="roomInput" placeholder="Room code" />
+  <h1>Brain Battle</h1>
+  <p class="small">Join the battle using the room code on the host screen.</p>
+
+  <input id="nameInput" placeholder="Your name" autocomplete="off" />
+  <input id="roomInput" placeholder="Room code" autocomplete="off" />
+
   <button id="joinBtn">Join Battle</button>
+  <p id="joinStatus"></p>
 </div>
 
 <!-- LOBBY -->
 <div id="lobbyScreen" class="screen" hidden>
-  <h2>Waiting for players...</h2>
+  <h1>Brain Battle</h1>
+  <h2>Waiting Room</h2>
+  <p id="lobbyStatus">Connected. Waiting for the host to start.</p>
 </div>
 
 <!-- GAME -->
@@ -337,6 +343,8 @@
 
   <h2 id="questionNumberText">Question</h2>
   <div id="questionText">Waiting...</div>
+
+  <input id="answerInput" placeholder="Answer" autocomplete="off" inputmode="none" />
 
   <div id="gameControls">
 
@@ -388,6 +396,16 @@
     </div>
 
   </div>
+
+  <div id="endButtons" hidden>
+  <button id="playAgainBtn">Play Again</button>
+  <button id="backToLobbyBtn">Back to Lobby</button>
+  </div>
+
+  <button id="submitAnswerBtn">Submit Answer</button>
+  <div id="damageBox">Stored Damage: 0</div>
+  <p id="statusText"></p>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@colyseus/sdk@0.17.41/dist/colyseus.js"></script>
