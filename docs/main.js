@@ -23,10 +23,6 @@ const healBtn = document.getElementById("healBtn");
 const healFill = document.getElementById("healFill");
 const attackFill = document.getElementById("attackFill");
 const statusText = document.getElementById("statusText");
-const customKeypad = document.getElementById("customKeypad");
-const endButtons = document.getElementById("endButtons");
-const playAgainBtn = document.getElementById("playAgainBtn");
-const backToLobbyBtn = document.getElementById("backToLobbyBtn");
 
 const myHealthLabel = document.getElementById("myHealthLabel");
 const opponentHealthLabel = document.getElementById("opponentHealthLabel");
@@ -296,6 +292,15 @@ attackBtn.addEventListener("pointerdown", (event) => {
   statusText.textContent = "Attack sent!";
 });
 
+attackOnlyBtn.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
+
+  if (!room) return;
+
+  room.send("attack");
+  statusText.textContent = "Attack sent!";
+});
+
 healBtn.addEventListener("pointerdown", (event) => {
   event.preventDefault();
 
@@ -310,29 +315,4 @@ healBtn.addEventListener("pointerdown", (event) => {
   }
 
   room.send("heal");
-});
-
-playAgainBtn.addEventListener("click", () => {
-  if (!room) return;
-
-  gameScreen.classList.remove("ended");
-
-  customKeypadHeal.hidden = false;
-  customKeypadAttackOnly.hidden = true;
-  endButtons.hidden = true;
-  answerInput.hidden = false;
-  answerInput.disabled = false;
-
-  room.send("playAgain");
-});
-
-backToLobbyBtn.addEventListener("click", () => {
-  showScreen("joinScreen");
-
-  gameScreen.classList.remove("ended");
-
-  joinBtn.disabled = false;
-  joinStatus.textContent = "";
-  lobbyStatus.textContent = "Connected. Waiting for the host to start.";
-  roomInput.value = "";
 });
