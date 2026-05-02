@@ -35,6 +35,11 @@ const opponentHealthFill = document.getElementById("opponentHealthFill");
 
 const keypadButtons = document.querySelectorAll(".keypadBtn");
 
+const customKeypadHeal = document.getElementById("customKeypadHeal");
+const customKeypadAttackOnly = document.getElementById("customKeypadAttackOnly");
+const attackOnlyBtn = document.getElementById("attackOnlyBtn");
+const attackOnlyFill = document.getElementById("attackOnlyFill");
+
 document.addEventListener("wheel", (e) => {
   e.preventDefault();
 }, { passive: false });
@@ -158,48 +163,37 @@ function setupRoomListeners() {
     if (!me) return;
 
     const maxHealth = state.startingHealth || 20;
-    const healingEnabled = state.healingEnabled !== false;
-    const actionRow = document.querySelector(".actionRow");
+    const healingEnabled = state.healingEnabled === true;
 
-    if (healingEnabled) {
-      healBtn.hidden = false;
-      actionRow.classList.remove("healingOff");
-    } else {
-      healBtn.hidden = true;
-      actionRow.classList.add("healingOff");
-    }
-
-    healBtn.addEventListener("pointerdown", (event) => {
-    event.preventDefault();
-
-    if (!room) return;
-    if (healBtn.hidden) return;
-
-    room.send("heal");
-    
-  });
+    // Choose keypad
+    customKeypadHeal.hidden = !healingEnabled;
+    customKeypadAttackOnly.hidden = healingEnabled;
 
     const attackPoints = Math.min(me.storedDamage, maxHealth);
     const healPoints = Math.min(me.healCharge, 10);
 
+    // Attack fill for both keypad versions
     attackFill.style.clipPath = `inset(0 ${100 - (attackPoints / maxHealth) * 100}% 0 0)`;
-    healFill.style.clipPath = `inset(0 ${100 - healPoints * 10}% 0 0)`;
+    attackOnlyFill.style.clipPath = `inset(0 ${100 - (attackPoints / maxHealth) * 100}% 0 0)`;
 
     attackBtn.querySelector(".actionText").textContent = `Attack: ${attackPoints}`;
+    attackOnlyBtn.querySelector(".actionText").textContent = `Attack: ${attackPoints}`;
 
+    // Heal fill only when healing is on
     if (healingEnabled) {
+      healFill.style.clipPath = `inset(0 ${100 - healPoints * 10}% 0 0)`;
       healBtn.querySelector(".actionText").textContent = `Heal: ${healPoints}`;
     }
 
     myHealthLabel.textContent = "Your Health";
 
-    const myHealthPercent = Math.min(me.health, maxHealth) / maxHealth * 100;
+    const myHealthPercent = (Math.min(me.health, maxHealth) / maxHealth) * 100;
     myHealthFill.style.clipPath = `inset(0 ${100 - myHealthPercent}% 0 0)`;
 
     if (opponent) {
       opponentHealthLabel.textContent = opponent.name + " Health";
 
-      const opponentHealthPercent = Math.min(opponent.health, maxHealth) / maxHealth * 100;
+      const opponentHealthPercent = (Math.min(opponent.health, maxHealth) / maxHealth) * 100;
       opponentHealthFill.style.clipPath = `inset(0 ${100 - opponentHealthPercent}% 0 0)`;
     } else {
       opponentHealthLabel.textContent = "Waiting for opponent...";
