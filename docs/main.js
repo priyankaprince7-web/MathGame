@@ -157,30 +157,28 @@ function setupRoomListeners() {
 
     if (!me) return;
 
-    // --- ATTACK / HEAL BARS ---
     const attackPoints = Math.min(me.storedDamage, 10);
     const healPoints = Math.min(me.healCharge, 10);
 
-    const attackPercent = attackPoints * 10;
-    const healPercent = healPoints * 10;
-
-    attackFill.style.clipPath = `inset(0 ${100 - attackPercent}% 0 0)`;
-    healFill.style.clipPath = `inset(0 ${100 - healPercent}% 0 0)`;
+    attackFill.style.clipPath = `inset(0 ${100 - attackPoints * 10}% 0 0)`;
+    healFill.style.clipPath = `inset(0 ${100 - healPoints * 10}% 0 0)`;
 
     attackBtn.querySelector(".actionText").textContent = `Attack: ${attackPoints}`;
     healBtn.querySelector(".actionText").textContent = `Heal: ${healPoints}`;
 
-    // --- YOUR HEALTH BAR ---
     myHealthLabel.textContent = "Your Health";
-    myHealthFill.style.width = Math.min(me.health, 20) * 5 + "%";
 
-    // --- OPPONENT HEALTH BAR ---
+    const myHealthPercent = Math.min(me.health, 20) * 5;
+    myHealthFill.style.clipPath = `inset(0 ${100 - myHealthPercent}% 0 0)`;
+
     if (opponent) {
-      opponentHealthFill.style.width = Math.min(opponent.health, 20) * 5 + "%";
       opponentHealthLabel.textContent = opponent.name + " Health";
+
+      const opponentHealthPercent = Math.min(opponent.health, 20) * 5;
+      opponentHealthFill.style.clipPath = `inset(0 ${100 - opponentHealthPercent}% 0 0)`;
     } else {
-      opponentHealthFill.style.width = "0%";
       opponentHealthLabel.textContent = "Waiting for opponent...";
+      opponentHealthFill.style.clipPath = "inset(0 100% 0 0)";
     }
   });
 
