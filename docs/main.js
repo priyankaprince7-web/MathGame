@@ -157,24 +157,42 @@ function setupRoomListeners() {
 
     if (!me) return;
 
-    const attackPoints = Math.min(me.storedDamage, 20);
+    const maxHealth = state.startingHealth || 20;
+    const healingEnabled = state.healingEnabled !== false;
+
+    const actionRow = document.querySelector(".actionRow");
+
+    if (actionRow) {
+      if (healingEnabled) {
+        healBtn.hidden = false;
+        actionRow.classList.remove("healingOff");
+      } else {
+        healBtn.hidden = true;
+        actionRow.classList.add("healingOff");
+      }
+    }
+
+    const attackPoints = Math.min(me.storedDamage, maxHealth);
     const healPoints = Math.min(me.healCharge, 10);
 
-    attackFill.style.clipPath = `inset(0 ${100 - attackPoints * 5}% 0 0)`;
+    attackFill.style.clipPath = `inset(0 ${100 - (attackPoints / maxHealth) * 100}% 0 0)`;
     healFill.style.clipPath = `inset(0 ${100 - healPoints * 10}% 0 0)`;
 
     attackBtn.querySelector(".actionText").textContent = `Attack: ${attackPoints}`;
-    healBtn.querySelector(".actionText").textContent = `Heal: ${healPoints}`;
+
+    if (healingEnabled) {
+      healBtn.querySelector(".actionText").textContent = `Heal: ${healPoints}`;
+    }
 
     myHealthLabel.textContent = "Your Health";
 
-    const myHealthPercent = Math.min(me.health, 20) * 5;
+    const myHealthPercent = Math.min(me.health, maxHealth) / maxHealth * 100;
     myHealthFill.style.clipPath = `inset(0 ${100 - myHealthPercent}% 0 0)`;
 
     if (opponent) {
       opponentHealthLabel.textContent = opponent.name + " Health";
 
-      const opponentHealthPercent = Math.min(opponent.health, 20) * 5;
+      const opponentHealthPercent = Math.min(opponent.health, maxHealth) / maxHealth * 100;
       opponentHealthFill.style.clipPath = `inset(0 ${100 - opponentHealthPercent}% 0 0)`;
     } else {
       opponentHealthLabel.textContent = "Waiting for opponent...";

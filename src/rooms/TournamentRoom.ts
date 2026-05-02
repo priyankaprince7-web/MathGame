@@ -51,7 +51,14 @@ export class TournamentRoom extends Room {
       this.broadcastStatus(`${participant.name} joined the lobby`);
     });
 
-    this.onMessage("startGame", () => {
+    this.onMessage("startGame", (client, settings?: {
+      difficulty?: string;
+      timerEnabled?: boolean;
+      timerMinutes?: number;
+      healingEnabled?: boolean;
+      startingHealth?: number;
+    }) => {
+      this.applySettings(settings);
       this.startMatch();
     });
 
@@ -70,19 +77,25 @@ export class TournamentRoom extends Room {
 
       const submitted = Number(message.answer);
 
-      if (submitted === currentQuestion.answer) {
-        player.storedDamage = Math.min(player.storedDamage + 2, 20);
+    if (submitted === currentQuestion.answer) {
+      player.storedDamage = Math.min(player.storedDamage + 2, this.state.startingHealth);
+
+      if (this.state.healingEnabled) {
         player.healCharge = Math.min(player.healCharge + 1, 10);
-        player.questionIndex += 1;
-
-        client.send("answerFeedback", {
-          correct: true,
-          message: "Correct!"
-        });
-
-        this.sendQuestionToPlayer(client, player);
-        this.broadcastGameState();
       } else {
+        player.healCharge = 0;
+      }
+
+      player.questionIndex += 1;
+
+      client.send("answerFeedback", {
+        correct: true,
+        message: "Correct!"
+      });
+
+      this.sendQuestionToPlayer(client, player);
+      this.broadcastGameState();
+    } else {
         client.send("answerFeedback", {
           correct: false,
           message: "Wrong answer. Try again."
@@ -91,6 +104,11 @@ export class TournamentRoom extends Room {
     });
 
     this.onMessage("heal", (client) => {
+      if (!this.state.healingEnabled) {
+        client.send("statusMessage", "Healing is off");
+        return;
+      }
+
       if (!this.gameStarted) return;
 
       const player = this.state.players.get(client.sessionId);
@@ -103,7 +121,7 @@ export class TournamentRoom extends Room {
 
       const amount = player.healCharge;
 
-      player.health = Math.min(20, player.health + amount);
+      player.health = Math.min(this.state.startingHealth, player.health + amount);
 
       player.healCharge = 0;
       player.storedDamage = Math.max(0, player.storedDamage - amount);
@@ -149,6 +167,27 @@ export class TournamentRoom extends Room {
     });
   }
 
+  applySettings(settings?: {
+    difficulty?: string;
+    timerEnabled?: boolean;
+    timerMinutes?: number;
+    healingEnabled?: boolean;
+    startingHealth?: number;
+  }) {
+    const difficulty = settings?.difficulty || "easy";
+    this.state.difficulty = ["easy", "medium", "hard"].includes(difficulty)
+      ? difficulty
+      : "easy";
+
+    this.state.timerEnabled = settings?.timerEnabled ?? true;
+    this.state.timerMinutes = Math.max(3, Math.min(10, Number(settings?.timerMinutes ?? 3)));
+
+    this.state.healingEnabled = settings?.healingEnabled ?? true;
+    this.state.startingHealth = Math.max(10, Math.min(50, Number(settings?.startingHealth ?? 20)));
+
+    this.matchDurationMs = this.state.timerMinutes * 60 * 1000;
+  }
+
   startMatch() {
     const players = this.getPlayers();
 
@@ -159,12 +198,18 @@ export class TournamentRoom extends Room {
 
     this.gameStarted = true;
     this.state.status = "in_match";
-    this.questionDeck = this.generateQuestionDeck(100);
-    this.matchEndsAt = Date.now() + this.matchDurationMs;
-    this.state.timeRemainingMs = this.matchDurationMs;
+    this.questionDeck = this.generateQuestionDeck(100, this.state.difficulty);
+
+    if (this.state.timerEnabled) {
+      this.matchEndsAt = Date.now() + this.matchDurationMs;
+      this.state.timeRemainingMs = this.matchDurationMs;
+    } else {
+      this.matchEndsAt = 0;
+      this.state.timeRemainingMs = -1;
+    }
 
     for (const player of players) {
-      player.health = 20;
+      player.health = this.state.startingHealth;
       player.storedDamage = 0;
       player.healCharge = 0;
       player.questionIndex = 0;
@@ -172,22 +217,22 @@ export class TournamentRoom extends Room {
 
     this.clearTimers();
 
-    this.timerInterval = setInterval(() => {
-      this.state.timeRemainingMs = Math.max(0, this.matchEndsAt - Date.now());
-      this.broadcastGameState();
-    }, 1000);
+    if (this.state.timerEnabled) {
+      this.timerInterval = setInterval(() => {
+        this.state.timeRemainingMs = Math.max(0, this.matchEndsAt - Date.now());
+        this.broadcastGameState();
+      }, 1000);
 
-    this.matchTimeout = setTimeout(() => {
-      this.endMatchByTime();
-    }, this.matchDurationMs);
+      this.matchTimeout = setTimeout(() => {
+        this.endMatchByTime();
+      }, this.matchDurationMs);
+    }
 
     this.broadcast("gameStarted");
     this.broadcastPlayers();
     this.broadcastGameState();
     this.sendQuestionsToPlayers();
     this.broadcastStatus("Match started");
-
-    console.log("Game started");
   }
 
   onJoin(client: Client, options: { role?: Role }) {
@@ -254,9 +299,10 @@ export class TournamentRoom extends Room {
   }
 
   broadcastGameState() {
-    this.state.timeRemainingMs = this.gameStarted
-      ? Math.max(0, this.matchEndsAt - Date.now())
-      : 0;
+    this.state.timeRemainingMs =
+      this.gameStarted && this.state.timerEnabled
+        ? Math.max(0, this.matchEndsAt - Date.now())
+        : -1;
 
     const playersOnly = this.getPlayers().map((p) => ({
       id: p.id,
@@ -270,7 +316,12 @@ export class TournamentRoom extends Room {
     this.broadcast("gameState", {
       players: playersOnly,
       gameStarted: this.gameStarted,
-      timeRemainingMs: this.state.timeRemainingMs
+      timeRemainingMs: this.state.timeRemainingMs,
+      difficulty: this.state.difficulty,
+      timerEnabled: this.state.timerEnabled,
+      timerMinutes: this.state.timerMinutes,
+      healingEnabled: this.state.healingEnabled,
+      startingHealth: this.state.startingHealth
     });
   }
 
@@ -313,20 +364,61 @@ export class TournamentRoom extends Room {
     return this.getPlayers().find((p) => p.id !== playerId) || null;
   }
 
-  generateQuestionDeck(count: number): Question[] {
+  generateQuestionDeck(count: number, difficulty = "easy"): Question[] {
     const deck: Question[] = [];
 
     for (let i = 0; i < count; i++) {
-      const a = Math.floor(Math.random() * 11);
-      const b = Math.floor(Math.random() * 11);
-
-      deck.push({
-        prompt: `${a} + ${b} = ?`,
-        answer: a + b
-      });
+      deck.push(this.generateBedmasQuestion(difficulty));
     }
 
     return deck;
+  }
+
+  generateBedmasQuestion(difficulty: string): Question {
+    const r = (min: number, max: number) =>
+      Math.floor(Math.random() * (max - min + 1)) + min;
+
+    let a = 0;
+    let b = 0;
+    let c = 0;
+    let d = 0;
+    let prompt = "";
+    let answer = 0;
+
+    if (difficulty === "easy") {
+      a = r(1, 10);
+      b = r(1, 10);
+      c = r(1, 10);
+
+      if (Math.random() < 0.5) {
+        prompt = `${a} + ${b} × ${c}`;
+        answer = a + b * c;
+      } else {
+        prompt = `(${a} + ${b}) × ${c}`;
+        answer = (a + b) * c;
+      }
+    } else if (difficulty === "medium") {
+      a = r(2, 12);
+      b = r(2, 12);
+      c = r(2, 12);
+      d = r(1, 10);
+
+      prompt = `${a} × (${b} + ${c}) - ${d}`;
+      answer = a * (b + c) - d;
+    } else {
+      a = r(2, 15);
+      b = r(2, 10);
+      c = r(2, 10);
+      d = r(2, 8);
+
+      prompt = `(${a} + ${b}) × ${c} - ${d}²`;
+      answer = (a + b) * c - d * d;
+    }
+
+    return {
+      prompt: `${prompt} = ?`,
+      answer
+    };
   }
 
   endMatchByTime() {
