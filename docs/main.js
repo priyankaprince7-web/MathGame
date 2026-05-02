@@ -214,10 +214,11 @@ function setupRoomListeners() {
     gameScreen.classList.add("ended");
 
     questionNumberText.textContent = "Match Over";
-    questionText.textContent = data.winnerName ? `${data.winnerName} wins!` : "Match Over";
+    questionText.textContent =
+      `${data.winnerName || "Someone"} wins!\n\nIf you want to play again, press the Play Again button on the main game screen.`;
 
     customKeypad.hidden = true;
-    endButtons.hidden = false;
+    endButtons.hidden = true;
     answerInput.hidden = true;
 
     submitAnswerBtn.disabled = true;
