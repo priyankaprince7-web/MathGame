@@ -101,8 +101,12 @@ export class TournamentRoom extends Room {
         return;
       }
 
-      player.health = Math.min(20, player.health + player.healCharge);
-      player.healCharge = 0;
+      const amount = player.healCharge;
+
+      player.health = Math.min(20, player.health + amount);
+
+      player.healCharge = Math.max(0, player.healCharge - amount);
+      player.storedDamage = Math.max(0, player.storedDamage - amount);
 
       client.send("statusMessage", "Health increased!");
       this.broadcastGameState();
@@ -123,7 +127,9 @@ export class TournamentRoom extends Room {
       if (!defender) return;
 
       const damage = attacker.storedDamage;
-      attacker.storedDamage = 0;
+
+      attacker.storedDamage = Math.max(0, attacker.storedDamage - damage);
+      attacker.healCharge = Math.max(0, attacker.healCharge - damage);
 
       defender.health = Math.max(0, defender.health - damage);
 

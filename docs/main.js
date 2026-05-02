@@ -157,17 +157,24 @@ function setupRoomListeners() {
 
     if (!me) return;
 
-    // --- ATTACK BAR ---
-    const attackPercent = Math.min(me.storedDamage, 10) * 10;
-    attackFill.style.clipPath = `inset(0 ${100 - attackPercent}% 0 0)`;
+    // --- ATTACK / HEAL BARS ---
+    const attackPoints = Math.min(me.storedDamage, 10);
+    const healPoints = Math.min(me.healCharge, 10);
 
-    // --- HEAL BAR ---
-    const healPercent = Math.min(me.healCharge, 10) * 10;
+    const attackPercent = attackPoints * 10;
+    const healPercent = healPoints * 10;
+
+    attackFill.style.clipPath = `inset(0 ${100 - attackPercent}% 0 0)`;
     healFill.style.clipPath = `inset(0 ${100 - healPercent}% 0 0)`;
 
-    // --- HEALTH BARS ---
+    attackBtn.querySelector(".actionText").textContent = `Attack: ${attackPoints}`;
+    healBtn.querySelector(".actionText").textContent = `Heal: ${healPoints}`;
+
+    // --- YOUR HEALTH BAR ---
+    myHealthLabel.textContent = "Your Health";
     myHealthFill.style.width = Math.min(me.health, 20) * 5 + "%";
 
+    // --- OPPONENT HEALTH BAR ---
     if (opponent) {
       opponentHealthFill.style.width = Math.min(opponent.health, 20) * 5 + "%";
       opponentHealthLabel.textContent = opponent.name + " Health";
