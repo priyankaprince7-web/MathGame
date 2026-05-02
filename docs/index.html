@@ -168,11 +168,20 @@
 
     #customKeypadHeal,
     #customKeypadAttackOnly {
-      display: grid;
       grid-template-columns: repeat(3, 78px);
       gap: 10px;
       justify-content: center;
       margin: 12px 0;
+    }
+
+    #customKeypadHeal:not([hidden]),
+    #customKeypadAttackOnly:not([hidden]) {
+      display: grid;
+    }
+
+    #customKeypadHeal[hidden],
+    #customKeypadAttackOnly[hidden] {
+      display: none !important;
     }
 
     #attackOnlyFill {
@@ -451,7 +460,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@colyseus/sdk@0.17.41/dist/colyseus.js"></script>
-<script src="./main.js?v=266666"></script>
+<script src="./main.js?v=277777"></script>
 
 </body>
 </html>

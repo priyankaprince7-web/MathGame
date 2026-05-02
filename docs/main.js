@@ -123,7 +123,8 @@ function setupRoomListeners() {
     statusText.textContent = "Game started!";
     gameScreen.classList.remove("ended");
 
-    customKeypad.hidden = false;
+    customKeypadHeal.hidden = false;
+    customKeypadAttackOnly.hidden = true;
     endButtons.hidden = true;
     answerInput.hidden = false;
     answerInput.disabled = false;
@@ -140,7 +141,8 @@ function setupRoomListeners() {
 
     gameScreen.classList.remove("ended");
 
-    customKeypad.hidden = false;
+    customKeypadHeal.hidden = false;
+  customKeypadAttackOnly.hidden = true;
     endButtons.hidden = true;
     answerInput.hidden = false;
     answerInput.disabled = false;
@@ -218,7 +220,8 @@ function setupRoomListeners() {
     questionText.textContent =
       `${data.winnerName || "Someone"} wins!\n\nIf you want to play again, press the Play Again button on the main game screen.`;
 
-    customKeypad.hidden = true;
+    customKeypadHeal.hidden = true;
+    customKeypadAttackOnly.hidden = true;
     endButtons.hidden = true;
     answerInput.hidden = true;
 
@@ -314,7 +317,8 @@ playAgainBtn.addEventListener("click", () => {
 
   gameScreen.classList.remove("ended");
 
-  customKeypad.hidden = false;
+  customKeypadHeal.hidden = false;
+  customKeypadAttackOnly.hidden = true;
   endButtons.hidden = true;
   answerInput.hidden = false;
   answerInput.disabled = false;
