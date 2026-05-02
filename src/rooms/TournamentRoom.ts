@@ -71,7 +71,7 @@ export class TournamentRoom extends Room {
       const submitted = Number(message.answer);
 
       if (submitted === currentQuestion.answer) {
-        player.storedDamage = Math.min(player.storedDamage + 2, 10);
+        player.storedDamage = Math.min(player.storedDamage + 1, 10);
         player.healCharge = Math.min(player.healCharge + 1, 10);
         player.questionIndex += 1;
 

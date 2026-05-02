@@ -157,10 +157,10 @@ function setupRoomListeners() {
 
     if (!me) return;
 
-    const attackPoints = Math.min(me.storedDamage, 10);
+    const attackPoints = Math.min(me.storedDamage, 20);
     const healPoints = Math.min(me.healCharge, 10);
 
-    attackFill.style.clipPath = `inset(0 ${100 - attackPoints * 10}% 0 0)`;
+    attackFill.style.clipPath = `inset(0 ${100 - attackPoints * 5}% 0 0)`;
     healFill.style.clipPath = `inset(0 ${100 - healPoints * 10}% 0 0)`;
 
     attackBtn.querySelector(".actionText").textContent = `Attack: ${attackPoints}`;
