@@ -121,7 +121,7 @@ function setupRoomListeners() {
 
     customKeypadHeal.hidden = false;
     customKeypadAttackOnly.hidden = true;
-    endButtons.hidden = true;
+
     answerInput.hidden = false;
     answerInput.disabled = false;
   });
