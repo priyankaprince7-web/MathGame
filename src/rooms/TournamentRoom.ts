@@ -104,15 +104,16 @@ export class TournamentRoom extends Room {
     });
 
     this.onMessage("heal", (client) => {
-      if (!this.state.healingEnabled) {
-        client.send("statusMessage", "Healing is off");
-        return;
-      }
-
       if (!this.gameStarted) return;
 
       const player = this.state.players.get(client.sessionId);
       if (!player || player.role !== "player") return;
+
+      // ✅ THIS is the correct place
+      if (!this.state.healingEnabled) {
+        client.send("statusMessage", "Healing is off");
+        return;
+      }
 
       if (player.healCharge <= 0) {
         client.send("statusMessage", "No health charge to use");
@@ -203,6 +204,15 @@ export class TournamentRoom extends Room {
     if (this.state.timerEnabled) {
       this.matchEndsAt = Date.now() + this.matchDurationMs;
       this.state.timeRemainingMs = this.matchDurationMs;
+
+      this.timerInterval = setInterval(() => {
+        this.state.timeRemainingMs = Math.max(0, this.matchEndsAt - Date.now());
+        this.broadcastGameState();
+      }, 1000);
+
+      this.matchTimeout = setTimeout(() => {
+        this.endMatchByTime();
+      }, this.matchDurationMs);
     } else {
       this.matchEndsAt = 0;
       this.state.timeRemainingMs = -1;
@@ -316,7 +326,7 @@ export class TournamentRoom extends Room {
     this.broadcast("gameState", {
       players: playersOnly,
       gameStarted: this.gameStarted,
-      timeRemainingMs: this.state.timeRemainingMs,
+      timeRemainingMs: this.state.timerEnabled ? this.state.timeRemainingMs : -1,
       difficulty: this.state.difficulty,
       timerEnabled: this.state.timerEnabled,
       timerMinutes: this.state.timerMinutes,

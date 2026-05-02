@@ -159,18 +159,25 @@ function setupRoomListeners() {
 
     const maxHealth = state.startingHealth || 20;
     const healingEnabled = state.healingEnabled !== false;
-
     const actionRow = document.querySelector(".actionRow");
 
-    if (actionRow) {
-      if (healingEnabled) {
-        healBtn.hidden = false;
-        actionRow.classList.remove("healingOff");
-      } else {
-        healBtn.hidden = true;
-        actionRow.classList.add("healingOff");
-      }
+    if (healingEnabled) {
+      healBtn.hidden = false;
+      actionRow.classList.remove("healingOff");
+    } else {
+      healBtn.hidden = true;
+      actionRow.classList.add("healingOff");
     }
+
+    healBtn.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+
+    if (!room) return;
+    if (healBtn.hidden) return;
+
+    room.send("heal");
+    
+  });
 
     const attackPoints = Math.min(me.storedDamage, maxHealth);
     const healPoints = Math.min(me.healCharge, 10);
@@ -297,6 +304,10 @@ healBtn.addEventListener("pointerdown", (event) => {
 
   if (!room) return;
 
+  // 🚫 block if healing is turned OFF
+  if (healBtn.hidden) return;
+
+  // 🚫 block if no charge
   if (healBtn.classList.contains("notReady")) {
     return;
   }
