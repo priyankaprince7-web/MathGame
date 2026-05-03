@@ -36,6 +36,15 @@ const customKeypadAttackOnly = document.getElementById("customKeypadAttackOnly")
 const attackOnlyBtn = document.getElementById("attackOnlyBtn");
 const attackOnlyFill = document.getElementById("attackOnlyFill");
 
+let currentHealingEnabled = true;
+
+function setKeypadMode(healingEnabled) {
+  currentHealingEnabled = healingEnabled === true;
+
+  customKeypadHeal.hidden = !currentHealingEnabled;
+  customKeypadAttackOnly.hidden = currentHealingEnabled;
+}
+
 document.addEventListener("wheel", (e) => {
   e.preventDefault();
 }, { passive: false });
@@ -119,11 +128,15 @@ function setupRoomListeners() {
     statusText.textContent = "Game started!";
     gameScreen.classList.remove("ended");
 
-    customKeypadHeal.hidden = false;
-    customKeypadAttackOnly.hidden = true;
+    setKeypadMode(currentHealingEnabled);
 
     answerInput.hidden = false;
     answerInput.disabled = false;
+
+    submitAnswerBtn.disabled = false;
+    attackBtn.disabled = false;
+    healBtn.disabled = false;
+    attackOnlyBtn.disabled = false;
   });
 
   room.onMessage("question", (data) => {
@@ -137,9 +150,7 @@ function setupRoomListeners() {
 
     gameScreen.classList.remove("ended");
 
-    customKeypadHeal.hidden = false;
-  customKeypadAttackOnly.hidden = true;
-    endButtons.hidden = true;
+    setKeypadMode(currentHealingEnabled);
     answerInput.hidden = false;
     answerInput.disabled = false;
   });
@@ -162,10 +173,7 @@ function setupRoomListeners() {
 
     const maxHealth = state.startingHealth || 20;
     const healingEnabled = state.healingEnabled === true;
-
-    // Choose keypad
-    customKeypadHeal.hidden = !healingEnabled;
-    customKeypadAttackOnly.hidden = healingEnabled;
+    setKeypadMode(healingEnabled);
 
     const attackPoints = Math.min(me.storedDamage, maxHealth);
     const healPoints = Math.min(me.healCharge, 10);
