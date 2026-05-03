@@ -398,6 +398,36 @@ export class TournamentRoom extends Room {
     let answer = 0;
 
     if (difficulty === "easy") {
+      const operations = ["+", "-", "×", "÷"];
+      const op = operations[r(0, operations.length - 1)];
+
+      if (op === "+") {
+        a = r(1, 20);
+        b = r(1, 20);
+        prompt = `${a} + ${b}`;
+        answer = a + b;
+      } 
+      else if (op === "-") {
+        a = r(1, 20);
+        b = r(1, a); // keeps answer whole and not negative
+        prompt = `${a} - ${b}`;
+        answer = a - b;
+      } 
+      else if (op === "×") {
+        a = r(1, 12);
+        b = r(1, 12);
+        prompt = `${a} × ${b}`;
+        answer = a * b;
+      } 
+      else if (op === "÷") {
+        b = r(1, 12);
+        answer = r(1, 12);
+        a = b * answer; // guarantees no remainder
+        prompt = `${a} ÷ ${b}`;
+      }
+    } 
+    else if (difficulty === "medium") {
+      // This is your old easy format
       a = r(1, 10);
       b = r(1, 10);
       c = r(1, 10);
@@ -409,7 +439,9 @@ export class TournamentRoom extends Room {
         prompt = `(${a} + ${b}) × ${c}`;
         answer = (a + b) * c;
       }
-    } else if (difficulty === "medium") {
+    } 
+    else {
+      // This is your old medium format
       a = r(2, 12);
       b = r(2, 12);
       c = r(2, 12);
@@ -417,14 +449,6 @@ export class TournamentRoom extends Room {
 
       prompt = `${a} × (${b} + ${c}) - ${d}`;
       answer = a * (b + c) - d;
-    } else {
-      a = r(2, 15);
-      b = r(2, 10);
-      c = r(2, 10);
-      d = r(2, 8);
-
-      prompt = `(${a} + ${b}) × ${c} - ${d}²`;
-      answer = (a + b) * c - d * d;
     }
 
     return {
