@@ -212,24 +212,31 @@ function setupRoomListeners() {
 
     gameScreen.classList.add("ended");
 
+    const winnerName = data.winnerName || "Someone";
+
     questionNumberText.textContent = "Match Over";
-    questionText.textContent =
-      `${data.winnerName || "Someone"} wins!\n\nIf you want to play again, press the Play Again button on the main game screen.`;
+    questionText.innerHTML = `
+      <div id="winnerLine">${winnerName} Wins!</div>
+      <div id="playAgainMessage">
+        If you want to play again, press the Play Again button on the main game screen.
+      </div>
+    `;
 
     customKeypadHeal.hidden = true;
     customKeypadAttackOnly.hidden = true;
-    endButtons.hidden = true;
     answerInput.hidden = true;
 
     submitAnswerBtn.disabled = true;
     attackBtn.disabled = true;
     healBtn.disabled = true;
+    attackOnlyBtn.disabled = true;
     answerInput.disabled = true;
   });
 
   room.onLeave(() => {
     setStatus("Disconnected from room.");
   });
+
 }
 
 function submitAnswer() {

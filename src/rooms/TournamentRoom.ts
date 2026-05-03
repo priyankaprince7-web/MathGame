@@ -109,7 +109,6 @@ export class TournamentRoom extends Room {
       const player = this.state.players.get(client.sessionId);
       if (!player || player.role !== "player") return;
 
-      // ✅ THIS is the correct place
       if (!this.state.healingEnabled) {
         client.send("statusMessage", "Healing is off");
         return;
@@ -126,6 +125,9 @@ export class TournamentRoom extends Room {
 
       player.healCharge = 0;
       player.storedDamage = Math.max(0, player.storedDamage - amount);
+
+      // ⭐ ADD THIS
+      this.broadcast("healUsed", player.id);
 
       client.send("statusMessage", "Health increased!");
       this.broadcastGameState();
