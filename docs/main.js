@@ -299,9 +299,27 @@ function setupRoomListeners() {
 
   room.onLeave(() => {
     room = null;
+
     joinBtn.disabled = false;
+    joinStatus.textContent = "Room disconnected. Enter your name and room code to join again.";
+    lobbyStatus.textContent = "";
+
+    roomInput.value = "";
+    answerInput.value = "";
+
+    gameScreen.classList.remove("ended");
+
+    customKeypadHeal.hidden = true;
+    customKeypadAttackOnly.hidden = true;
+    answerInput.hidden = true;
+
+    submitAnswerBtn.disabled = true;
+    attackBtn.disabled = true;
+    healBtn.disabled = true;
+    attackOnlyBtn.disabled = true;
+    answerInput.disabled = true;
+
     showScreen("joinScreen");
-    joinStatus.textContent = "Disconnected from room.";
   });
 
   room.onMessage("hostBackToTitle", () => {
@@ -309,6 +327,8 @@ function setupRoomListeners() {
 
     joinBtn.disabled = false;
     roomInput.value = "";
+    answerInput.value = "";
+
     joinStatus.textContent = "Host returned to lobby. Enter a room code to join.";
 
     showScreen("joinScreen");
