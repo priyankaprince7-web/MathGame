@@ -169,6 +169,8 @@ function setupRoomListeners() {
 
     gameScreen.classList.remove("ended");
 
+    customKeypadHeal.style.display = "";
+    customKeypadAttackOnly.style.display = "";
     setKeypadMode(currentHealingEnabled);
     answerInput.hidden = false;
     answerInput.disabled = false;
@@ -255,9 +257,13 @@ function setupRoomListeners() {
       </div>
     `;
 
+    // fully hide gameplay UI
     customKeypadHeal.hidden = true;
     customKeypadAttackOnly.hidden = true;
     answerInput.hidden = true;
+
+    customKeypadHeal.style.display = "none";
+    customKeypadAttackOnly.style.display = "none";
 
     submitAnswerBtn.disabled = true;
     attackBtn.disabled = true;
