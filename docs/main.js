@@ -123,6 +123,25 @@ function setupRoomListeners() {
     lobbyStatus.textContent = "Players: " + names;
   });
 
+  room.onMessage("countdown", (data) => {
+    showScreen("gameScreen");
+
+    questionNumberText.textContent = "";
+    questionText.textContent = data.text;
+
+    statusText.textContent = "Get ready!";
+
+    customKeypadHeal.hidden = true;
+    customKeypadAttackOnly.hidden = true;
+    answerInput.hidden = true;
+
+    submitAnswerBtn.disabled = true;
+    attackBtn.disabled = true;
+    healBtn.disabled = true;
+    attackOnlyBtn.disabled = true;
+    answerInput.disabled = true;
+  });
+
   room.onMessage("gameStarted", () => {
     showScreen("gameScreen");
     statusText.textContent = "Game started!";
@@ -152,6 +171,12 @@ function setupRoomListeners() {
 
     setKeypadMode(currentHealingEnabled);
     answerInput.hidden = false;
+    answerInput.disabled = false;
+
+    submitAnswerBtn.disabled = false;
+    attackBtn.disabled = false;
+    healBtn.disabled = false;
+    attackOnlyBtn.disabled = false;
     answerInput.disabled = false;
   });
 

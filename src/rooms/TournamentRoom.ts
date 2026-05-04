@@ -30,6 +30,8 @@ export class TournamentRoom extends Room {
 
   timerInterval: NodeJS.Timeout | null = null;
   matchTimeout: NodeJS.Timeout | null = null;
+  countdownTimeouts: NodeJS.Timeout[] = [];
+  inputEnabled = false;
 
   onCreate() {
     this.roomId = makeRoomCode();
@@ -58,16 +60,16 @@ export class TournamentRoom extends Room {
       healingEnabled?: boolean;
       startingHealth?: number;
     }) => {
-      this.applySettings(settings);
-      this.startMatch();
+    this.applySettings(settings);
+    this.startCountdownThenMatch();
     });
 
     this.onMessage("playAgain", () => {
-      this.startMatch();
+      this.startCountdownThenMatch();
     });
 
     this.onMessage("submitAnswer", (client, message: { answer: string | number }) => {
-      if (!this.gameStarted) return;
+      if (!this.gameStarted || !this.inputEnabled) return;
 
       const player = this.state.players.get(client.sessionId);
       if (!player || player.role !== "player") return;
@@ -104,7 +106,7 @@ export class TournamentRoom extends Room {
     });
 
     this.onMessage("heal", (client) => {
-      if (!this.gameStarted) return;
+      if (!this.gameStarted || !this.inputEnabled) return;
 
       const player = this.state.players.get(client.sessionId);
       if (!player || player.role !== "player") return;
@@ -134,7 +136,7 @@ export class TournamentRoom extends Room {
     });
 
     this.onMessage("attack", (client) => {
-      if (!this.gameStarted) return;
+      if (!this.gameStarted || !this.inputEnabled) return;
 
       const attacker = this.state.players.get(client.sessionId);
       if (!attacker || attacker.role !== "player") return;
@@ -199,9 +201,19 @@ export class TournamentRoom extends Room {
       return;
     }
 
+    this.clearTimers();
+
     this.gameStarted = true;
+    this.inputEnabled = true;
     this.state.status = "in_match";
     this.questionDeck = this.generateQuestionDeck(100, this.state.difficulty);
+
+    for (const player of players) {
+      player.health = this.state.startingHealth;
+      player.storedDamage = 0;
+      player.healCharge = 0;
+      player.questionIndex = 0;
+    }
 
     if (this.state.timerEnabled) {
       this.matchEndsAt = Date.now() + this.matchDurationMs;
@@ -218,26 +230,6 @@ export class TournamentRoom extends Room {
     } else {
       this.matchEndsAt = 0;
       this.state.timeRemainingMs = -1;
-    }
-
-    for (const player of players) {
-      player.health = this.state.startingHealth;
-      player.storedDamage = 0;
-      player.healCharge = 0;
-      player.questionIndex = 0;
-    }
-
-    this.clearTimers();
-
-    if (this.state.timerEnabled) {
-      this.timerInterval = setInterval(() => {
-        this.state.timeRemainingMs = Math.max(0, this.matchEndsAt - Date.now());
-        this.broadcastGameState();
-      }, 1000);
-
-      this.matchTimeout = setTimeout(() => {
-        this.endMatchByTime();
-      }, this.matchDurationMs);
     }
 
     this.broadcast("gameStarted");
@@ -458,7 +450,8 @@ export class TournamentRoom extends Room {
   }
 
   endMatchByTime() {
-    if (!this.gameStarted) return;
+    if (!this.gameStarted || !this.inputEnabled) return;
+    this.inputEnabled = false;
 
     const players = this.getPlayers();
     if (players.length < 2) return;
@@ -496,6 +489,7 @@ export class TournamentRoom extends Room {
     this.state.status = "finished";
     this.clearTimers();
     this.broadcastGameState();
+    this.inputEnabled = false;
 
     this.broadcast("matchEnded", {
       winnerId: winner.id,
@@ -518,5 +512,48 @@ export class TournamentRoom extends Room {
       clearTimeout(this.matchTimeout);
       this.matchTimeout = null;
     }
+
+    for (const timeout of this.countdownTimeouts) {
+      clearTimeout(timeout);
+    }
+
+    this.countdownTimeouts = [];
+  }
+
+  startCountdownThenMatch() {
+    const players = this.getPlayers();
+
+    if (players.length !== 2) {
+      this.broadcastStatus("Need exactly 2 players to start");
+      return;
+    }
+
+    this.clearTimers();
+
+    this.inputEnabled = false;
+    this.gameStarted = false;
+    this.state.status = "countdown";
+    this.state.timeRemainingMs = -1;
+
+    this.broadcastGameState();
+
+    this.broadcast("countdown", { text: "3" });
+
+    this.countdownTimeouts.push(setTimeout(() => {
+      this.broadcast("countdown", { text: "2" });
+    }, 1000));
+
+    this.countdownTimeouts.push(setTimeout(() => {
+      this.broadcast("countdown", { text: "1" });
+    }, 2000));
+
+    this.countdownTimeouts.push(setTimeout(() => {
+      this.broadcast("countdown", { text: "Fight!" });
+    }, 3000));
+
+    this.countdownTimeouts.push(setTimeout(() => {
+      this.inputEnabled = true;
+      this.startMatch();
+    }, 4000));
   }
 }
