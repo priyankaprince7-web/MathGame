@@ -36,6 +36,8 @@ const customKeypadAttackOnly = document.getElementById("customKeypadAttackOnly")
 const attackOnlyBtn = document.getElementById("attackOnlyBtn");
 const attackOnlyFill = document.getElementById("attackOnlyFill");
 
+const healthPanel = document.getElementById("healthPanel");
+
 let currentHealingEnabled = true;
 
 function setKeypadMode(healingEnabled) {
@@ -123,6 +125,25 @@ function setupRoomListeners() {
     lobbyStatus.textContent = "Players: " + names;
   });
 
+  room.onMessage("returnToLobby", () => {
+    showScreen("lobbyScreen");
+
+    gameScreen.classList.remove("ended");
+
+    customKeypadHeal.hidden = true;
+    customKeypadAttackOnly.hidden = true;
+    answerInput.hidden = true;
+    if (healthPanel) healthPanel.hidden = true;
+
+    submitAnswerBtn.disabled = true;
+    attackBtn.disabled = true;
+    healBtn.disabled = true;
+    attackOnlyBtn.disabled = true;
+    answerInput.disabled = true;
+
+    lobbyStatus.textContent = "Waiting for the host to start again.";
+  });
+
   room.onMessage("countdown", (data) => {
     showScreen("gameScreen");
 
@@ -134,6 +155,7 @@ function setupRoomListeners() {
     customKeypadHeal.hidden = true;
     customKeypadAttackOnly.hidden = true;
     answerInput.hidden = true;
+    if (healthPanel) healthPanel.hidden = true;
 
     submitAnswerBtn.disabled = true;
     attackBtn.disabled = true;
@@ -161,6 +183,8 @@ function setupRoomListeners() {
   room.onMessage("question", (data) => {
     showScreen("gameScreen");
 
+    if (healthPanel) healthPanel.hidden = false;
+
     questionNumberText.textContent = "Question " + data.questionNumber;
     questionText.textContent = data.prompt;
 
@@ -180,6 +204,7 @@ function setupRoomListeners() {
     healBtn.disabled = false;
     attackOnlyBtn.disabled = false;
     answerInput.disabled = false;
+
   });
 
   room.onMessage("answerFeedback", (data) => {
@@ -273,7 +298,20 @@ function setupRoomListeners() {
   });
 
   room.onLeave(() => {
-    setStatus("Disconnected from room.");
+    room = null;
+    joinBtn.disabled = false;
+    showScreen("joinScreen");
+    joinStatus.textContent = "Disconnected from room.";
+  });
+
+  room.onMessage("hostBackToTitle", () => {
+    room = null;
+
+    joinBtn.disabled = false;
+    roomInput.value = "";
+    joinStatus.textContent = "Host returned to lobby. Enter a room code to join.";
+
+    showScreen("joinScreen");
   });
 
 }

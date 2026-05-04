@@ -170,6 +170,32 @@ export class TournamentRoom extends Room {
         this.endMatch(attacker, defender, `${attacker.name} wins by knockout`);
       }
     });
+
+    this.onMessage("returnToLobby", () => {
+    this.clearTimers();
+
+    this.gameStarted = false;
+    this.inputEnabled = false;
+    this.state.status = "lobby";
+    this.state.timeRemainingMs = -1;
+
+    for (const player of this.getPlayers()) {
+      player.health = this.state.startingHealth || 20;
+      player.storedDamage = 0;
+      player.healCharge = 0;
+      player.questionIndex = 0;
+    }
+
+    this.broadcast("returnToLobby");
+    this.broadcastPlayers();
+    this.broadcastGameState();
+    this.broadcastStatus("Waiting for host to start again...");
+  });
+
+  this.onMessage("hostBackToTitle", () => {
+    this.broadcast("hostBackToTitle");
+  });
+
   }
 
   applySettings(settings?: {
