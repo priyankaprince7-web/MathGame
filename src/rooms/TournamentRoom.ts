@@ -196,6 +196,22 @@ export class TournamentRoom extends Room {
     this.broadcast("hostBackToTitle");
   });
 
+  this.onMessage("pauseGame", () => {
+    if (!this.gameStarted) return;
+
+    this.inputEnabled = false;
+    this.broadcast("gamePaused");
+    this.broadcastStatus("Game paused");
+  });
+
+  this.onMessage("resumeGame", () => {
+    if (!this.gameStarted) return;
+
+    this.inputEnabled = true;
+    this.broadcast("gameResumed");
+    this.broadcastStatus("Game resumed");
+  });
+
   }
 
   applySettings(settings?: {

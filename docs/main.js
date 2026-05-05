@@ -1,4 +1,4 @@
-const client = new Colyseus.Client("wss://mathgame-production-5026.up.railway.app");
+const client = new Colyseus.Client("wss://www.scholarshowdown.com");
 
 let room = null;
 
@@ -124,6 +124,31 @@ function setupRoomListeners() {
   room.onMessage("updatePlayers", (players) => {
     const names = players.map((p) => p.name).join(", ");
     lobbyStatus.textContent = "Players: " + names;
+  });
+
+  room.onMessage("gamePaused", () => {
+    showScreen("gameScreen");
+
+    questionNumberText.hidden = true;
+    questionNumberText.textContent = "";
+
+    questionText.textContent = "Game Paused";
+    statusText.textContent = "Waiting for host to resume...";
+
+    customKeypadHeal.hidden = true;
+    customKeypadAttackOnly.hidden = true;
+    answerInput.hidden = true;
+
+    submitAnswerBtn.disabled = true;
+    attackBtn.disabled = true;
+    healBtn.disabled = true;
+    attackOnlyBtn.disabled = true;
+    answerInput.disabled = true;
+  });
+
+  room.onMessage("gameResumed", () => {
+    questionText.textContent = "Resuming...";
+    statusText.textContent = "Back to battle!";
   });
 
   room.onMessage("returnToLobby", () => {
