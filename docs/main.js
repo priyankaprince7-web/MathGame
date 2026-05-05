@@ -39,6 +39,7 @@ const attackOnlyFill = document.getElementById("attackOnlyFill");
 const healthPanel = document.getElementById("healthPanel");
 
 let currentHealingEnabled = true;
+let phoneTimerEnabled = false;
 
 function setKeypadMode(healingEnabled) {
   currentHealingEnabled = healingEnabled === true;
@@ -147,8 +148,8 @@ function setupRoomListeners() {
   room.onMessage("countdown", (data) => {
     showScreen("gameScreen");
 
+    questionNumberText.hidden = true;
     questionNumberText.textContent = "";
-    questionText.textContent = data.text;
 
     statusText.textContent = "Get ready!";
 
@@ -185,7 +186,10 @@ function setupRoomListeners() {
 
     if (healthPanel) healthPanel.hidden = false;
 
-    questionNumberText.textContent = "Question " + data.questionNumber;
+    if (!phoneTimerEnabled) {
+      questionNumberText.hidden = true;
+      questionNumberText.textContent = "";
+    }
     questionText.textContent = data.prompt;
 
     answerInput.value = "";
@@ -226,6 +230,20 @@ function setupRoomListeners() {
     const maxHealth = state.startingHealth || 20;
     const healingEnabled = state.healingEnabled === true;
     setKeypadMode(healingEnabled);
+
+    phoneTimerEnabled = state.timerEnabled === true;
+
+    if (phoneTimerEnabled && state.timeRemainingMs >= 0) {
+      const totalSeconds = Math.max(0, Math.ceil(state.timeRemainingMs / 1000));
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+
+      questionNumberText.hidden = false;
+      questionNumberText.textContent = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+    } else {
+      questionNumberText.hidden = true;
+      questionNumberText.textContent = "";
+    }
 
     const attackPoints = Math.min(me.storedDamage, maxHealth);
     const healPoints = Math.min(me.healCharge, 10);
