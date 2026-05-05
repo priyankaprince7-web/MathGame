@@ -49,7 +49,9 @@ function setKeypadMode(healingEnabled) {
 }
 
 document.addEventListener("wheel", (e) => {
-  e.preventDefault();
+  if (!gameScreen.hidden && !gameScreen.classList.contains("ended")) {
+    e.preventDefault();
+  }
 }, { passive: false });
 
 document.querySelectorAll("button").forEach((btn) => {
@@ -77,10 +79,10 @@ function showScreen(screenId) {
 
   document.getElementById(screenId).hidden = false;
 
-  if (screenId === "joinScreen") {
-    document.body.classList.remove("lockScroll");
-  } else {
+  if (screenId === "gameScreen" && !gameScreen.classList.contains("ended")) {
     document.body.classList.add("lockScroll");
+  } else {
+    document.body.classList.remove("lockScroll");
   }
 }
 
@@ -314,6 +316,7 @@ function setupRoomListeners() {
     showScreen("gameScreen");
 
     gameScreen.classList.add("ended");
+    document.body.classList.remove("lockScroll");
 
     const winnerName = data.winnerName || "Someone";
 
