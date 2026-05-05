@@ -32,6 +32,8 @@ export class TournamentRoom extends Room {
   matchTimeout: NodeJS.Timeout | null = null;
   countdownTimeouts: NodeJS.Timeout[] = [];
   inputEnabled = false;
+  isPaused = false;
+  pausedTimeRemainingMs = -1;
 
   onCreate() {
     this.roomId = makeRoomCode();
@@ -197,19 +199,74 @@ export class TournamentRoom extends Room {
   });
 
   this.onMessage("pauseGame", () => {
-    if (!this.gameStarted) return;
+    if (!this.gameStarted || this.isPaused) return;
 
+    this.isPaused = true;
     this.inputEnabled = false;
+
+    if (this.state.timerEnabled) {
+      this.pausedTimeRemainingMs = Math.max(0, this.matchEndsAt - Date.now());
+      this.state.timeRemainingMs = this.pausedTimeRemainingMs;
+    }
+
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+
+    if (this.matchTimeout) {
+      clearTimeout(this.matchTimeout);
+      this.matchTimeout = null;
+    }
+
+    this.broadcastGameState();
     this.broadcast("gamePaused");
     this.broadcastStatus("Game paused");
   });
 
   this.onMessage("resumeGame", () => {
-    if (!this.gameStarted) return;
+    if (!this.gameStarted || !this.isPaused) return;
 
-    this.inputEnabled = true;
+    this.isPaused = false;
+    this.inputEnabled = false;
+
     this.broadcast("gameResumed");
-    this.broadcastStatus("Game resumed");
+    this.broadcastStatus("Resuming...");
+
+    this.broadcast("countdown", { text: "3" });
+
+    this.countdownTimeouts.push(setTimeout(() => {
+      this.broadcast("countdown", { text: "2" });
+    }, 1000));
+
+    this.countdownTimeouts.push(setTimeout(() => {
+      this.broadcast("countdown", { text: "1" });
+    }, 2000));
+
+    this.countdownTimeouts.push(setTimeout(() => {
+      this.broadcast("countdown", { text: "Fight!" });
+    }, 3000));
+
+    this.countdownTimeouts.push(setTimeout(() => {
+      this.inputEnabled = true;
+
+      if (this.state.timerEnabled) {
+        this.matchEndsAt = Date.now() + this.pausedTimeRemainingMs;
+
+        this.timerInterval = setInterval(() => {
+          this.state.timeRemainingMs = Math.max(0, this.matchEndsAt - Date.now());
+          this.broadcastGameState();
+        }, 1000);
+
+        this.matchTimeout = setTimeout(() => {
+          this.endMatchByTime();
+        }, this.pausedTimeRemainingMs);
+      }
+
+      this.broadcastGameState();
+      this.sendQuestionsToPlayers();
+      this.broadcastStatus("Match resumed");
+    }, 4000));
   });
 
   }

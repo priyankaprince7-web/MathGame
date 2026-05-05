@@ -40,6 +40,7 @@ const healthPanel = document.getElementById("healthPanel");
 
 let currentHealingEnabled = true;
 let phoneTimerEnabled = false;
+let isPhonePaused = false;
 
 function setKeypadMode(healingEnabled) {
   currentHealingEnabled = healingEnabled === true;
@@ -129,17 +130,24 @@ function setupRoomListeners() {
   });
 
   room.onMessage("gamePaused", () => {
+    isPhonePaused = true;
+
     showScreen("gameScreen");
+    gameScreen.classList.remove("ended");
 
     questionNumberText.hidden = true;
     questionNumberText.textContent = "";
 
     questionText.textContent = "Game Paused";
-    statusText.textContent = "Waiting for host to resume...";
+    statusText.textContent = "";
 
     customKeypadHeal.hidden = true;
     customKeypadAttackOnly.hidden = true;
     answerInput.hidden = true;
+    if (healthPanel) healthPanel.hidden = true;
+
+    customKeypadHeal.style.display = "none";
+    customKeypadAttackOnly.style.display = "none";
 
     submitAnswerBtn.disabled = true;
     attackBtn.disabled = true;
@@ -149,8 +157,23 @@ function setupRoomListeners() {
   });
 
   room.onMessage("gameResumed", () => {
+    isPhonePaused = false;
+
+    showScreen("gameScreen");
+
     questionText.textContent = "Resuming...";
-    statusText.textContent = "Back to battle!";
+    statusText.textContent = "";
+
+    customKeypadHeal.hidden = true;
+    customKeypadAttackOnly.hidden = true;
+    answerInput.hidden = true;
+    if (healthPanel) healthPanel.hidden = true;
+
+    submitAnswerBtn.disabled = true;
+    attackBtn.disabled = true;
+    healBtn.disabled = true;
+    attackOnlyBtn.disabled = true;
+    answerInput.disabled = true;
   });
 
   room.onMessage("returnToLobby", () => {
@@ -209,6 +232,7 @@ function setupRoomListeners() {
   });
 
   room.onMessage("question", (data) => {
+    if (isPhonePaused) return;
     showScreen("gameScreen");
 
     if (healthPanel) healthPanel.hidden = false;
@@ -248,6 +272,7 @@ function setupRoomListeners() {
 
   room.onMessage("gameState", (state) => {
     if (!state || !state.players || !room) return;
+    if (isPhonePaused) return;
 
     const me = state.players.find((p) => p.id === room.sessionId);
     const opponent = state.players.find((p) => p.id !== room.sessionId);
