@@ -30,8 +30,7 @@ const server = defineServer({
 
     express: (app) => {
 
-        // ✅ SERVE YOUR PHONE UI FROM /docs
-        app.use(express.static(path.join(__dirname, "../docs")));
+        app.use(express.static(path.join(process.cwd(), "docs")));
 
         app.get("/hi", (req, res) => {
             res.send("It's time to kick ass and chew bubblegum!");
