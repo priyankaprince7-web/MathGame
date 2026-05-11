@@ -1,4 +1,5 @@
 import { Room, Client } from "colyseus";
+import { SinglePlayerControllerState } from "./schema/SinglePlayerControllerState.js";
 
 type Role = "host" | "player";
 
@@ -21,6 +22,14 @@ export class SinglePlayerControllerRoom extends Room {
 
   onCreate() {
     this.roomId = makeRoomCode();
+
+    this.setState(new SinglePlayerControllerState());
+
+    const state = this.state as SinglePlayerControllerState;
+
+    state.roomCode = this.roomId;
+    state.status = "waiting";
+    state.phoneConnected = false;
 
     this.onMessage("joinLobby", (client, message: { name?: string }) => {
       if (client !== this.phone) return;
@@ -75,6 +84,11 @@ export class SinglePlayerControllerRoom extends Room {
     }
 
     this.phone = client;
+    const state = this.state as SinglePlayerControllerState;
+
+    state.phoneConnected = true;
+    state.status = "phone_connected";
+
     console.log("Single player phone joined", this.roomId);
   }
 
@@ -82,10 +96,15 @@ export class SinglePlayerControllerRoom extends Room {
     if (client === this.host) {
       this.host = null;
       this.disconnect();
+      return;
     }
 
     if (client === this.phone) {
       this.phone = null;
+      const state = this.state as SinglePlayerControllerState;
+
+      state.phoneConnected = false;
+      state.status = "waiting";
 
       if (this.host) {
         this.host.send("phoneDisconnected", {});
