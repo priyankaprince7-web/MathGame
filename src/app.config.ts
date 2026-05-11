@@ -7,11 +7,12 @@ import {
     createEndpoint,
 } from "colyseus";
 
-import express from "express"; // 👈 ADD THIS
-import path from "path";       // 👈 ADD THIS
-import { fileURLToPath } from "url"; // 👈 ADD THIS
+import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
 
 import { TournamentRoom } from "./rooms/TournamentRoom.js";
+import { SinglePlayerControllerRoom } from "./rooms/SinglePlayerControllerRoom.js";
 
 // Needed for proper path resolution
 const __filename = fileURLToPath(import.meta.url);
@@ -19,7 +20,8 @@ const __dirname = path.dirname(__filename);
 
 const server = defineServer({
     rooms: {
-        tournament: defineRoom(TournamentRoom)
+        tournament: defineRoom(TournamentRoom),
+        singleplayer_controller: defineRoom(SinglePlayerControllerRoom),
     },
 
     routes: createRouter({
@@ -29,7 +31,6 @@ const server = defineServer({
     }),
 
     express: (app) => {
-
         app.use(express.static(path.join(process.cwd(), "docs")));
 
         app.get("/hi", (req, res) => {
