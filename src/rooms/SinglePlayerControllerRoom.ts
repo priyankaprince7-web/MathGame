@@ -77,6 +77,15 @@ export class SinglePlayerControllerRoom extends Room {
       this.phone.send("singleProgress", message);
     });
 
+    this.onMessage("singleEnded", (client, message: {
+      completed: boolean;
+      message: string;
+    }) => {
+      if (client !== this.host || !this.phone) return;
+
+      this.phone.send("singleEnded", message);
+    });
+
   }
 
   onJoin(client: Client, options: { role?: Role }) {
@@ -116,4 +125,6 @@ export class SinglePlayerControllerRoom extends Room {
       }
     }
   }
+
+  
 }

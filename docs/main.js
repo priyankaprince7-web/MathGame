@@ -244,17 +244,12 @@ function setupRoomListeners() {
     if (statusText) statusText.textContent = "";
 
     if (isSinglePlayerController) {
-      if (singleKeypad) singleKeypad.hidden = false;
+      showSinglePlayerControls();
 
       if (answerInput) {
         answerInput.hidden = false;
         answerInput.disabled = false;
-        answerInput.value = "";
       }
-
-      if (healthPanel) healthPanel.hidden = true;
-      if (customKeypadHeal) customKeypadHeal.hidden = true;
-      if (customKeypadAttackOnly) customKeypadAttackOnly.hidden = true;
 
       return;
     }
@@ -288,12 +283,12 @@ function setupRoomListeners() {
     }
 
     if (isSinglePlayerController) {
-      if (singleKeypad) singleKeypad.hidden = false;
-      if (healthPanel) healthPanel.hidden = true;
-      if (statusText) statusText.textContent = "";
+      showSinglePlayerControls();
 
-      if (customKeypadHeal) customKeypadHeal.hidden = true;
-      if (customKeypadAttackOnly) customKeypadAttackOnly.hidden = true;
+      if (answerInput) {
+        answerInput.hidden = false;
+        answerInput.disabled = false;
+      }
 
       return;
     }
@@ -480,6 +475,26 @@ function setupRoomListeners() {
     }
   });
 
+  room.onMessage("singleEnded", (data) => {
+    if (!isSinglePlayerController) return;
+
+    showScreen("gameScreen");
+
+    if (questionText)
+      questionText.textContent = data.message || "Level Complete!";
+
+    if (answerInput) {
+      answerInput.hidden = true;
+      answerInput.disabled = true;
+    }
+
+    if (singleKeypad)
+      singleKeypad.hidden = true;
+
+    if (progressTimerText)
+      progressTimerText.textContent = "";
+  });
+
 }
 
 function submitAnswer() {
@@ -564,5 +579,17 @@ if (healBtn) {
     if (healBtn.classList.contains("notReady")) return;
 
     room.send("heal");
+  });
+}
+
+function showSinglePlayerControls() {
+  if (singleKeypad) singleKeypad.hidden = false;
+
+  if (customKeypadHeal) customKeypadHeal.hidden = true;
+  if (customKeypadAttackOnly) customKeypadAttackOnly.hidden = true;
+  if (healthPanel) healthPanel.hidden = true;
+
+  document.querySelectorAll(".actionRow").forEach(row => {
+    row.style.display = "none";
   });
 }
