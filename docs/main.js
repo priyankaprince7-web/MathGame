@@ -466,7 +466,7 @@ function setupRoomListeners() {
     const timer = data.timer ?? "";
 
     if (progressTimerText) {
-      progressTimerText.textContent = `${completed}/${total}     ${timer}`;
+      progressTimerText.textContent = `${completed}/${total}          ${timer}`;
     }
 
     if (questionNumberText) {
@@ -480,6 +480,9 @@ function setupRoomListeners() {
 
     showScreen("gameScreen");
 
+    if (progressTimerText)
+      progressTimerText.textContent = "";
+
     if (questionText)
       questionText.textContent = data.message || "Level Complete!";
 
@@ -490,9 +493,6 @@ function setupRoomListeners() {
 
     if (singleKeypad)
       singleKeypad.hidden = true;
-
-    if (progressTimerText)
-      progressTimerText.textContent = "";
   });
 
   room.onMessage("controllerMode", (mode) => {
