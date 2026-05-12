@@ -51,12 +51,6 @@ export class SinglePlayerControllerRoom extends Room {
       });
     });
 
-    this.onMessage("attack", (client) => {
-      if (client !== this.phone || !this.host) return;
-
-      this.host.send("phoneAttack", {});
-    });
-
     this.onMessage("singleQuestion", (client, message: { prompt: string; questionNumber?: number }) => {
       if (client !== this.host || !this.phone) return;
 

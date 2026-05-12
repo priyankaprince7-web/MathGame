@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Scholar Showdown Controller</title>
+
+  <style>
+    @font-face {
+      font-family: "BrainBattleFont";
+      src: url("./assets/fonts/INKFREE.TTF") format("truetype");
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    body {
+      margin: 0;
+      font-family: "BrainBattleFont", "Ink Free", "Comic Sans MS", cursive;
+      background: #f7f1dc;
+      color: #111;
+      text-align: center;
+      overflow: auto;
+      user-select: none;
+    }
+
+    body.lockScroll {
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    .screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      padding: 24px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: #fffdf2;
+      background-image:
+        linear-gradient(#b7d8ff 1px, transparent 1px),
+        linear-gradient(90deg, #b7d8ff 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    .screen[hidden] {
+      display: none !important;
+    }
+
+    h1 {
+      font-size: 48px;
+      margin: 16px 0;
+      text-shadow: 2px 2px 0 white;
+    }
+
+    h2 {
+      font-size: 34px;
+      margin: 8px 0;
+    }
+
+    input {
+      width: 90%;
+      max-width: 360px;
+      font-family: inherit;
+      font-size: 26px;
+      padding: 18px;
+      margin: 10px 0;
+      border: none;
+      outline: none;
+      background: transparent;
+      background-image: url("./assets/Button_sprite_empty.png");
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      text-align: center;
+    }
+
+    button {
+      width: 90%;
+      max-width: 360px;
+      font-family: inherit;
+      font-size: 26px;
+      padding: 20px;
+      margin: 12px 0;
+      border: none;
+      background: transparent;
+      background-image: url("./assets/Button_sprite_empty.png");
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      font-weight: bold;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+    }
+
+    button:active {
+      background-image: url("./assets/Button_sprite_filled.png");
+      transform: scale(0.96);
+    }
+
+    #joinScreen input {
+      width: 75%;
+      max-width: 260px;
+      font-size: 18px;
+      padding: 10px;
+      margin: 4px 0;
+    }
+
+    #joinScreen button {
+      width: 75%;
+      max-width: 260px;
+      font-size: 20px;
+      padding: 12px;
+      margin: 8px 0;
+    }
+
+    #joinScreen p.small {
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    #questionText {
+      font-size: clamp(24px, 9vw, 42px);
+      width: 92vw;
+      max-width: 420px;
+      margin: 10px auto;
+      line-height: 1.1;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    #healthPanel {
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .healthBlock {
+      margin: 4px 0;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .healthBar {
+      width: 100%;
+      height: 24px;
+      position: relative;
+      overflow: hidden;
+      background-image: url("./assets/Button_sprite_empty.png");
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+    }
+
+    .healthFill {
+      height: 100%;
+      width: 100%;
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      background-position: center;
+      transition: clip-path 0.2s ease-out;
+      clip-path: inset(0 0 0 0);
+    }
+
+    .myHealthFill {
+      background-image: url("./assets/shield_filled.png");
+    }
+
+    .opponentHealthFill {
+      background-image: url("./assets/attack_filled.png");
+    }
+
+    #customKeypadHeal,
+    #customKeypadAttackOnly {
+      grid-template-columns: repeat(3, 78px);
+      gap: 10px;
+      justify-content: center;
+      margin: 12px 0;
+    }
+
+    #customKeypadHeal:not([hidden]),
+    #customKeypadAttackOnly:not([hidden]) {
+      display: grid;
+    }
+
+    #customKeypadHeal[hidden],
+    #customKeypadAttackOnly[hidden] {
+      display: none !important;
+    }
+
+    #attackOnlyFill {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url("./assets/attack_filled.png");
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      background-position: center;
+      z-index: 1;
+      pointer-events: none;
+      clip-path: inset(0 100% 0 0);
+    }
+
+    .keypadBtn {
+      width: 78px;
+      height: 60px;
+      max-width: none;
+      margin: 0;
+      padding: 0;
+      background-image: url("./assets/Keypad_sprite_empty.png");
+      font-size: 28px;
+    }
+
+    .keypadBtn:active {
+      background-image: url("./assets/Keypad_sprite_filled.png");
+      transform: scale(0.94);
+    }
+
+    .submitKey {
+      background-image: url("./assets/Keypad_sprite_empty.png");
+      font-size: 28px;
+    }
+
+    .submitKey:active {
+      background-image: url("./assets/Keypad_sprite_filled.png");
+    }
+
+    .actionRow {
+      grid-column: span 3;
+      display: flex;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .actionBtn {
+      flex: 1;
+      height: 60px;
+      max-width: none;
+      margin: 0;
+      padding: 0;
+      border: none;
+      position: relative;
+      overflow: hidden;
+      background: transparent;
+      background-image: url("./assets/Button_sprite_empty.png");
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    #attackFill,
+    #healFill {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      background-position: center;
+
+      z-index: 1;
+      pointer-events: none;
+
+      clip-path: inset(0 100% 0 0); /* hidden by default */
+    }
+
+    #attackFill {
+      background-image: url("./assets/attack_filled.png");
+      transition: clip-path 0.15s ease-out;
+    }
+
+    #healFill {
+      background-image: url("./assets/shield_filled.png");
+      transition: clip-path 0.15s ease-out;
+    }
+
+    #healBtn.notReady {
+      filter: grayscale(1);
+      opacity: 0.45;
+    }
+
+    .actionText {
+      position: relative;
+      z-index: 2;
+      line-height: 60px;
+      pointer-events: none;
+    }
+
+    .actionBtn:active,
+    .actionBtn.pressed {
+      background-image: url("./assets/Button_sprite_empty.png");
+      transform: scale(0.96);
+    }
+
+    .actionBtn:hover {
+      background-image: url("./assets/Button_sprite_empty.png");
+    }
+
+    #submitAnswerBtn,
+    #damageBox,
+    #statusText {
+      display: none;
+    }
+
+    #gameScreen.ended #customKeypad,
+    #gameScreen.ended #answerInput,
+    #gameScreen.ended #healthPanel {
+      display: none !important;
+    }
+
+    #gameScreen.ended #endButtons {
+      display: flex !important;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    button.pressed {
+      background-image: url("./assets/Button_sprite_filled.png");
+      transform: scale(0.96);
+    }
+
+    .keypadBtn.pressed {
+      background-image: url("./assets/Keypad_sprite_filled.png");
+      transform: scale(0.94);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      button:hover {
+        background-image: url("./assets/Button_sprite_filled.png");
+      }
+
+      .keypadBtn:hover {
+        background-image: url("./assets/Keypad_sprite_filled.png");
+      }
+
+      .actionBtn:hover {
+        background-image: url("./assets/Button_sprite_empty.png");
+      }
+    }
+
+    #gameControls {
+      width: max-content;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .actionRow.healingOff #attackBtn {
+      flex: 1 1 100%;
+    }
+
+    .actionRow.healingOff #healBtn {
+      display: none !important;
+    }
+
+    .titleLogo {
+      width: 90%;
+      max-width: 420px;
+      margin: 12px 0;
+    }
+
+    #winnerLine {
+      font-size: 38px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    #playAgainMessage {
+      font-size: 22px;
+      line-height: 1.25;
+      max-width: 500px;
+      margin: 0 auto;
+      text-align: center;
+
+    }
+
+    #singleKeypad {
+      grid-template-columns: repeat(3, 78px);
+      gap: 10px;
+      justify-content: center;
+      margin: 12px 0;
+      display: grid;
+    }
+
+    #progressTimerText {
+      font-size: 34px;
+      margin: 8px 0;
+    }
+
+    #questionText {
+      font-size: clamp(24px, 9vw, 42px);
+      width: 92vw;
+      max-width: 420px;
+      margin: 10px auto;
+      line-height: 1.1;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<!-- JOIN -->
+<div id="joinScreen" class="screen">
+  <img class="titleLogo" src="./assets/ScholarShowdownTitle.png" alt="Scholar Showdown" />
+  <p class="small">Join the battle using the room code on the host screen.</p>
+
+  <input id="nameInput" placeholder="Your name" autocomplete="off" />
+  <input id="roomInput" placeholder="Room code" autocomplete="off" />
+
+  <button id="joinBtn">Join Battle</button>
+  <p id="joinStatus"></p>
+</div>
+
+<!-- LOBBY -->
+<div id="lobbyScreen" class="screen" hidden>
+  <img class="titleLogo" src="./assets/ScholarShowdownTitle.png" alt="Scholar Showdown" />
+  <h2>Waiting Room</h2>
+  <p id="lobbyStatus">Connected. Waiting for the host to start.</p>
+</div>
+
+<!-- GAME -->
+  <div id="gameScreen" class="screen" hidden>
+
+    <h2 id="progressTimerText">0/10    1:00</h2>
+
+    <div id="questionText">Waiting...</div>
+
+    <input id="answerInput" placeholder="Answer" autocomplete="off" inputmode="none" />
+
+    <div id="gameControls">
+      <div id="singleKeypad">
+        <button class="keypadBtn" data-key="1">1</button>
+        <button class="keypadBtn" data-key="2">2</button>
+        <button class="keypadBtn" data-key="3">3</button>
+        <button class="keypadBtn" data-key="4">4</button>
+        <button class="keypadBtn" data-key="5">5</button>
+        <button class="keypadBtn" data-key="6">6</button>
+        <button class="keypadBtn" data-key="7">7</button>
+        <button class="keypadBtn" data-key="8">8</button>
+        <button class="keypadBtn" data-key="9">9</button>
+        <button class="keypadBtn" data-key="back">⌫</button>
+        <button class="keypadBtn" data-key="0">0</button>
+        <button class="keypadBtn" data-key="submit">OK</button>
+      </div>
+    </div>
+
+    <p id="statusText"></p>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@colyseus/sdk@0.17.41/dist/colyseus.js"></script>
+<script src="./main.js?v=400008"></script>
+
+</body>
+</html>
