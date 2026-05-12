@@ -1,5 +1,10 @@
 const client = new Colyseus.Client("wss://www.scholarshowdown.com");
 
+const controllerMode = document.body.dataset.mode || "battle";
+const isSinglePlayerController = controllerMode === "singleplayer";
+
+const progressTimerText = document.getElementById("progressTimerText");
+
 let room = null;
 
 const joinScreen = document.getElementById("joinScreen");
@@ -43,6 +48,17 @@ let phoneTimerEnabled = false;
 let isPhonePaused = false;
 
 function setKeypadMode(healingEnabled) {
+  if (isSinglePlayerController) {
+    if (customKeypadHeal) customKeypadHeal.hidden = false;
+    if (customKeypadAttackOnly) customKeypadAttackOnly.hidden = true;
+    if (healthPanel) healthPanel.hidden = true;
+
+    const actionRows = document.querySelectorAll(".actionRow");
+    actionRows.forEach(row => row.style.display = "none");
+
+    return;
+  }
+
   currentHealingEnabled = healingEnabled === true;
 
   customKeypadHeal.hidden = !currentHealingEnabled;
@@ -235,7 +251,8 @@ function setupRoomListeners() {
     if (isPhonePaused) return;
     showScreen("gameScreen");
 
-    if (healthPanel) healthPanel.hidden = false;
+    if (healthPanel)
+    healthPanel.hidden = isSinglePlayerController;
 
     if (!phoneTimerEnabled) {
       questionNumberText.hidden = true;
@@ -250,7 +267,17 @@ function setupRoomListeners() {
 
     customKeypadHeal.style.display = "";
     customKeypadAttackOnly.style.display = "";
-    setKeypadMode(currentHealingEnabled);
+
+    if (isSinglePlayerController) {
+      customKeypadHeal.hidden = false;
+      customKeypadAttackOnly.hidden = true;
+
+      const actionRows = document.querySelectorAll(".actionRow");
+      actionRows.forEach(row => row.style.display = "none");
+    } else {
+      setKeypadMode(currentHealingEnabled);
+    }
+
     answerInput.hidden = false;
     answerInput.disabled = false;
 
@@ -405,6 +432,25 @@ function setupRoomListeners() {
     showScreen("joinScreen");
   });
 
+  room.onMessage("singleProgress", (data) => {
+    if (!isSinglePlayerController) return;
+
+    showScreen("gameScreen");
+
+    const completed = data.completed ?? 0;
+    const total = data.total ?? 10;
+    const timer = data.timer ?? "";
+
+    if (progressTimerText) {
+      progressTimerText.textContent = `${completed}/${total}     ${timer}`;
+    }
+
+    if (questionNumberText) {
+      questionNumberText.hidden = false;
+      questionNumberText.textContent = `${completed}/${total}     ${timer}`;
+    }
+  });
+
 }
 
 function submitAnswer() {
@@ -458,36 +504,34 @@ keypadButtons.forEach((btn) => {
   });
 });
 
-attackBtn.addEventListener("pointerdown", (event) => {
-  event.preventDefault();
+if (attackBtn) {
+  attackBtn.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    if (!room || isSinglePlayerController) return;
 
-  if (!room) return;
+    room.send("attack");
+    statusText.textContent = "Attack sent!";
+  });
+}
 
-  room.send("attack");
-  statusText.textContent = "Attack sent!";
-});
+if (attackOnlyBtn) {
+  attackOnlyBtn.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    if (!room || isSinglePlayerController) return;
 
-attackOnlyBtn.addEventListener("pointerdown", (event) => {
-  event.preventDefault();
+    room.send("attack");
+    statusText.textContent = "Attack sent!";
+  });
+}
 
-  if (!room) return;
+if (healBtn) {
+  healBtn.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    if (!room || isSinglePlayerController) return;
 
-  room.send("attack");
-  statusText.textContent = "Attack sent!";
-});
+    if (healBtn.hidden) return;
+    if (healBtn.classList.contains("notReady")) return;
 
-healBtn.addEventListener("pointerdown", (event) => {
-  event.preventDefault();
-
-  if (!room) return;
-
-  // 🚫 block if healing is turned OFF
-  if (healBtn.hidden) return;
-
-  // 🚫 block if no charge
-  if (healBtn.classList.contains("notReady")) {
-    return;
-  }
-
-  room.send("heal");
-});
+    room.send("heal");
+  });
+}
