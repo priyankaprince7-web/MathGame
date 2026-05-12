@@ -42,6 +42,7 @@ const attackOnlyBtn = document.getElementById("attackOnlyBtn");
 const attackOnlyFill = document.getElementById("attackOnlyFill");
 
 const healthPanel = document.getElementById("healthPanel");
+const singleKeypad = document.getElementById("singleKeypad");
 
 let currentHealingEnabled = true;
 let phoneTimerEnabled = false;
@@ -49,20 +50,25 @@ let isPhonePaused = false;
 
 function setKeypadMode(healingEnabled) {
   if (isSinglePlayerController) {
-    if (customKeypadHeal) customKeypadHeal.hidden = false;
+    if (singleKeypad) singleKeypad.hidden = false;
+    if (customKeypadHeal) customKeypadHeal.hidden = true;
     if (customKeypadAttackOnly) customKeypadAttackOnly.hidden = true;
     if (healthPanel) healthPanel.hidden = true;
 
-    const actionRows = document.querySelectorAll(".actionRow");
-    actionRows.forEach(row => row.style.display = "none");
+    document.querySelectorAll(".actionRow").forEach(row => {
+      row.style.display = "none";
+    });
 
     return;
   }
 
   currentHealingEnabled = healingEnabled === true;
 
-  customKeypadHeal.hidden = !currentHealingEnabled;
-  customKeypadAttackOnly.hidden = currentHealingEnabled;
+  if (customKeypadHeal)
+    customKeypadHeal.hidden = !currentHealingEnabled;
+
+  if (customKeypadAttackOnly)
+    customKeypadAttackOnly.hidden = currentHealingEnabled;
 }
 
 document.addEventListener("wheel", (e) => {
@@ -151,24 +157,24 @@ function setupRoomListeners() {
     showScreen("gameScreen");
     gameScreen.classList.remove("ended");
 
-    questionNumberText.hidden = true;
+    if (questionNumberText) questionNumberText.hidden = true;
     questionNumberText.textContent = "";
 
     questionText.textContent = "Game Paused";
     statusText.textContent = "";
 
-    customKeypadHeal.hidden = true;
-    customKeypadAttackOnly.hidden = true;
     answerInput.hidden = true;
     if (healthPanel) healthPanel.hidden = true;
 
-    customKeypadHeal.style.display = "none";
-    customKeypadAttackOnly.style.display = "none";
+    if (customKeypadHeal) customKeypadHeal.style.display = "none";
+    if (customKeypadAttackOnly) customKeypadAttackOnly.style.display = "none";
 
-    submitAnswerBtn.disabled = true;
-    attackBtn.disabled = true;
-    healBtn.disabled = true;
-    attackOnlyBtn.disabled = true;
+    if (submitAnswerBtn) submitAnswerBtn.disabled = true;
+    if (customKeypadHeal) customKeypadHeal.hidden = true;
+    if (customKeypadAttackOnly) customKeypadAttackOnly.hidden = true;
+    if (attackBtn) attackBtn.disabled = true;
+    if (healBtn) healBtn.disabled = true;
+    if (attackOnlyBtn) attackOnlyBtn.disabled = true;
     answerInput.disabled = true;
   });
 
@@ -180,15 +186,15 @@ function setupRoomListeners() {
     questionText.textContent = "Resuming...";
     statusText.textContent = "";
 
-    customKeypadHeal.hidden = true;
-    customKeypadAttackOnly.hidden = true;
+    if (customKeypadHeal) customKeypadHeal.hidden = true;
+    if (customKeypadAttackOnly) customKeypadAttackOnly.hidden = true;
     answerInput.hidden = true;
     if (healthPanel) healthPanel.hidden = true;
 
-    submitAnswerBtn.disabled = true;
-    attackBtn.disabled = true;
-    healBtn.disabled = true;
-    attackOnlyBtn.disabled = true;
+     if (submitAnswerBtn) submitAnswerBtn.disabled = true;
+    if (attackBtn) attackBtn.disabled = true;
+    if (healBtn) healBtn.disabled = true;
+    if (attackOnlyBtn) attackOnlyBtn.disabled = true;
     answerInput.disabled = true;
   });
 
@@ -197,15 +203,15 @@ function setupRoomListeners() {
 
     gameScreen.classList.remove("ended");
 
-    customKeypadHeal.hidden = true;
-    customKeypadAttackOnly.hidden = true;
+    if (customKeypadHeal) customKeypadHeal.hidden = true;
+    if (customKeypadAttackOnly) customKeypadAttackOnly.hidden = true;
     answerInput.hidden = true;
     if (healthPanel) healthPanel.hidden = true;
 
-    submitAnswerBtn.disabled = true;
-    attackBtn.disabled = true;
-    healBtn.disabled = true;
-    attackOnlyBtn.disabled = true;
+    if (submitAnswerBtn) submitAnswerBtn.disabled = true;
+    if (attackBtn) attackBtn.disabled = true;
+    if (healBtn) healBtn.disabled = true;
+    if (attackOnlyBtn) attackOnlyBtn.disabled = true;
     answerInput.disabled = true;
 
     lobbyStatus.textContent = "Waiting for the host to start again.";
@@ -214,79 +220,102 @@ function setupRoomListeners() {
   room.onMessage("countdown", (data) => {
     showScreen("gameScreen");
 
-    questionNumberText.hidden = true;
+    if (questionNumberText) questionNumberText.hidden = true;
     questionNumberText.textContent = "";
 
     statusText.textContent = "Get ready!";
 
-    customKeypadHeal.hidden = true;
-    customKeypadAttackOnly.hidden = true;
+    if (customKeypadHeal) customKeypadHeal.hidden = true;
+    if (customKeypadAttackOnly) customKeypadAttackOnly.hidden = true;
     answerInput.hidden = true;
     if (healthPanel) healthPanel.hidden = true;
 
-    submitAnswerBtn.disabled = true;
-    attackBtn.disabled = true;
-    healBtn.disabled = true;
-    attackOnlyBtn.disabled = true;
+    if (submitAnswerBtn) submitAnswerBtn.disabled = true;
+    if (attackBtn) attackBtn.disabled = true;
+    if (healBtn) healBtn.disabled = true;
+    if (attackOnlyBtn) attackOnlyBtn.disabled = true;
     answerInput.disabled = true;
   });
 
   room.onMessage("gameStarted", () => {
     showScreen("gameScreen");
-    statusText.textContent = "Game started!";
     gameScreen.classList.remove("ended");
+
+    if (statusText) statusText.textContent = "";
+
+    if (isSinglePlayerController) {
+      if (singleKeypad) singleKeypad.hidden = false;
+
+      if (answerInput) {
+        answerInput.hidden = false;
+        answerInput.disabled = false;
+        answerInput.value = "";
+      }
+
+      if (healthPanel) healthPanel.hidden = true;
+      if (customKeypadHeal) customKeypadHeal.hidden = true;
+      if (customKeypadAttackOnly) customKeypadAttackOnly.hidden = true;
+
+      return;
+    }
 
     setKeypadMode(currentHealingEnabled);
 
-    answerInput.hidden = false;
-    answerInput.disabled = false;
+    if (answerInput) {
+      answerInput.hidden = false;
+      answerInput.disabled = false;
+    }
 
-    submitAnswerBtn.disabled = false;
-    attackBtn.disabled = false;
-    healBtn.disabled = false;
-    attackOnlyBtn.disabled = false;
+    if (submitAnswerBtn) submitAnswerBtn.disabled = false;
+    if (attackBtn) attackBtn.disabled = false;
+    if (healBtn) healBtn.disabled = false;
+    if (attackOnlyBtn) attackOnlyBtn.disabled = false;
   });
 
   room.onMessage("question", (data) => {
     if (isPhonePaused) return;
+
     showScreen("gameScreen");
-
-    if (healthPanel)
-    healthPanel.hidden = isSinglePlayerController;
-
-    if (!phoneTimerEnabled) {
-      questionNumberText.hidden = true;
-      questionNumberText.textContent = "";
-    }
-    questionText.textContent = data.prompt;
-
-    answerInput.value = "";
-    statusText.textContent = "Solve it!";
-
     gameScreen.classList.remove("ended");
 
-    customKeypadHeal.style.display = "";
-    customKeypadAttackOnly.style.display = "";
+    if (questionText)
+      questionText.textContent = data.prompt;
 
-    if (isSinglePlayerController) {
-      customKeypadHeal.hidden = false;
-      customKeypadAttackOnly.hidden = true;
-
-      const actionRows = document.querySelectorAll(".actionRow");
-      actionRows.forEach(row => row.style.display = "none");
-    } else {
-      setKeypadMode(currentHealingEnabled);
+    if (answerInput) {
+      answerInput.value = "";
+      answerInput.hidden = false;
+      answerInput.disabled = false;
     }
 
-    answerInput.hidden = false;
-    answerInput.disabled = false;
+    if (isSinglePlayerController) {
+      if (singleKeypad) singleKeypad.hidden = false;
+      if (healthPanel) healthPanel.hidden = true;
+      if (statusText) statusText.textContent = "";
 
-    submitAnswerBtn.disabled = false;
-    attackBtn.disabled = false;
-    healBtn.disabled = false;
-    attackOnlyBtn.disabled = false;
-    answerInput.disabled = false;
+      if (customKeypadHeal) customKeypadHeal.hidden = true;
+      if (customKeypadAttackOnly) customKeypadAttackOnly.hidden = true;
 
+      return;
+    }
+
+    if (healthPanel) healthPanel.hidden = false;
+
+    if (!phoneTimerEnabled && questionNumberText) {
+      if (questionNumberText) questionNumberText.hidden = true;
+      questionNumberText.textContent = "";
+    }
+
+    if (statusText) statusText.textContent = "Solve it!";
+
+    if (customKeypadHeal) customKeypadHeal.style.display = "";
+    if (customKeypadAttackOnly) customKeypadAttackOnly.style.display = "";
+
+    setKeypadMode(currentHealingEnabled);
+
+    if (submitAnswerBtn) submitAnswerBtn.disabled = false;
+    if (attackBtn) attackBtn.disabled = false;
+    if (healBtn) healBtn.disabled = false;
+    if (attackOnlyBtn) attackOnlyBtn.disabled = false;
   });
 
   room.onMessage("answerFeedback", (data) => {
@@ -320,7 +349,7 @@ function setupRoomListeners() {
       questionNumberText.hidden = false;
       questionNumberText.textContent = `${minutes}:${seconds.toString().padStart(2, "0")}`;
     } else {
-      questionNumberText.hidden = true;
+      if (questionNumberText) questionNumberText.hidden = true;
       questionNumberText.textContent = "";
     }
 
@@ -381,17 +410,17 @@ function setupRoomListeners() {
     `;
 
     // fully hide gameplay UI
-    customKeypadHeal.hidden = true;
-    customKeypadAttackOnly.hidden = true;
+    if (customKeypadHeal) customKeypadHeal.hidden = true;
+    if (customKeypadAttackOnly) customKeypadAttackOnly.hidden = true;
     answerInput.hidden = true;
 
-    customKeypadHeal.style.display = "none";
-    customKeypadAttackOnly.style.display = "none";
+    if (customKeypadHeal) customKeypadHeal.style.display = "none";
+    if (customKeypadAttackOnly) customKeypadAttackOnly.style.display = "none";
 
-    submitAnswerBtn.disabled = true;
-    attackBtn.disabled = true;
-    healBtn.disabled = true;
-    attackOnlyBtn.disabled = true;
+    if (submitAnswerBtn) submitAnswerBtn.disabled = true;
+    if (attackBtn) attackBtn.disabled = true;
+    if (healBtn) healBtn.disabled = true;
+    if (attackOnlyBtn) attackOnlyBtn.disabled = true;
     answerInput.disabled = true;
   });
 
@@ -407,14 +436,14 @@ function setupRoomListeners() {
 
     gameScreen.classList.remove("ended");
 
-    customKeypadHeal.hidden = true;
-    customKeypadAttackOnly.hidden = true;
+    if (customKeypadHeal) customKeypadHeal.hidden = true;
+    if (customKeypadAttackOnly) customKeypadAttackOnly.hidden = true;
     answerInput.hidden = true;
 
-    submitAnswerBtn.disabled = true;
-    attackBtn.disabled = true;
-    healBtn.disabled = true;
-    attackOnlyBtn.disabled = true;
+    if (submitAnswerBtn) submitAnswerBtn.disabled = true;
+    if (attackBtn) attackBtn.disabled = true;
+    if (healBtn) healBtn.disabled = true;
+    if (attackOnlyBtn) attackOnlyBtn.disabled = true;
     answerInput.disabled = true;
 
     showScreen("joinScreen");
@@ -466,7 +495,9 @@ function submitAnswer() {
   room.send("submitAnswer", { answer });
 }
 
-submitAnswerBtn.onclick = submitAnswer;
+if (submitAnswerBtn) {
+  submitAnswerBtn.onclick = submitAnswer;
+}
 
 document.addEventListener("keydown", (event) => {
   if (gameScreen.hidden) return;
