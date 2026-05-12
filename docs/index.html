@@ -375,7 +375,21 @@
       max-width: 500px;
       margin: 0 auto;
       text-align: center;
+    }
 
+    #singleKeypad {
+      grid-template-columns: repeat(3, 78px);
+      gap: 10px;
+      justify-content: center;
+      margin: 12px 0;
+    }
+
+    #singleKeypad:not([hidden]) {
+      display: grid;
+    }
+
+    #singleKeypad[hidden] {
+      display: none !important;
     }
   </style>
 </head>
@@ -458,6 +472,21 @@
         <span class="actionText">ATTACK</span>
       </button>
     </div>
+  </div>
+
+  <div id="singleKeypad" hidden>
+    <button class="keypadBtn" data-key="1">1</button>
+    <button class="keypadBtn" data-key="2">2</button>
+    <button class="keypadBtn" data-key="3">3</button>
+    <button class="keypadBtn" data-key="4">4</button>
+    <button class="keypadBtn" data-key="5">5</button>
+    <button class="keypadBtn" data-key="6">6</button>
+    <button class="keypadBtn" data-key="7">7</button>
+    <button class="keypadBtn" data-key="8">8</button>
+    <button class="keypadBtn" data-key="9">9</button>
+    <button class="keypadBtn" data-key="back">⌫</button>
+    <button class="keypadBtn" data-key="0">0</button>
+    <button class="keypadBtn" data-key="submit">OK</button>
   </div>
 
     <!-- HEALTH BELOW -->

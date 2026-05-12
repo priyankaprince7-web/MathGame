@@ -1,7 +1,7 @@
 const client = new Colyseus.Client("wss://www.scholarshowdown.com");
 
-const controllerMode = document.body.dataset.mode || "battle";
-const isSinglePlayerController = controllerMode === "singleplayer";
+let controllerMode = document.body.dataset.mode || "battle";
+let isSinglePlayerController = controllerMode === "singleplayer";
 
 const progressTimerText = document.getElementById("progressTimerText");
 
@@ -495,6 +495,17 @@ function setupRoomListeners() {
       progressTimerText.textContent = "";
   });
 
+  room.onMessage("controllerMode", (mode) => {
+    controllerMode = mode;
+    isSinglePlayerController = mode === "singleplayer";
+
+    if (isSinglePlayerController) {
+      showSinglePlayerControls();
+    } else {
+      setKeypadMode(currentHealingEnabled);
+    }
+  });
+
 }
 
 function submitAnswer() {
@@ -585,8 +596,16 @@ if (healBtn) {
 function showSinglePlayerControls() {
   if (singleKeypad) singleKeypad.hidden = false;
 
-  if (customKeypadHeal) customKeypadHeal.hidden = true;
-  if (customKeypadAttackOnly) customKeypadAttackOnly.hidden = true;
+  if (customKeypadHeal) {
+    customKeypadHeal.hidden = true;
+    customKeypadHeal.style.display = "none";
+  }
+
+  if (customKeypadAttackOnly) {
+    customKeypadAttackOnly.hidden = true;
+    customKeypadAttackOnly.style.display = "none";
+  }
+
   if (healthPanel) healthPanel.hidden = true;
 
   document.querySelectorAll(".actionRow").forEach(row => {

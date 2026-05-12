@@ -40,6 +40,7 @@ export class SinglePlayerControllerRoom extends Room {
         this.host.send("phoneConnected", name);
       }
 
+      client.send("controllerMode", "singleplayer");
       client.send("statusMessage", "Connected to single player game");
     });
 

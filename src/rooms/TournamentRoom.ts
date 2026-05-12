@@ -342,6 +342,9 @@ export class TournamentRoom extends Room {
     const role: Role = options?.role === "host" ? "host" : "player";
 
     console.log(client.sessionId, "joined!", options);
+    if (role === "player") {
+      client.send("controllerMode", "battle");
+    }
 
     if (!this.state.players.has(client.sessionId)) {
       const player = new PlayerState();
