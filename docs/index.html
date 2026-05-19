@@ -391,6 +391,34 @@
     #singleKeypad[hidden] {
       display: none !important;
     }
+
+    #teamSetupScreen {
+      overflow-y: auto;
+      justify-content: flex-start;
+      padding-top: 32px;
+    }
+
+    #armyButtons {
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #roleDescription {
+      font-size: 22px;
+      line-height: 1.25;
+      max-width: 420px;
+      margin: 8px auto;
+    }
+
+    .roleBtn.selected,
+    .armyBtn.selected {
+      background-image: url("./assets/Button_sprite_filled.png");
+      transform: scale(0.98);
+    }
+
   </style>
 </head>
 
@@ -413,6 +441,33 @@
   <img class="titleLogo" src="./assets/ScholarShowdownTitle.png" alt="Scholar Showdown" />
   <h2>Waiting Room</h2>
   <p id="lobbyStatus">Connected. Waiting for the host to start.</p>
+</div>
+
+
+<!-- TEAM SETUP -->
+<div id="teamSetupScreen" class="screen" hidden>
+  <img class="titleLogo" src="./assets/ScholarShowdownTitle.png" alt="Scholar Showdown" />
+
+  <h2>Choose Army</h2>
+  <p id="teamSetupStatus">Pick an army, or choose random.</p>
+
+  <div id="armyButtons"></div>
+
+  <button id="randomArmyBtn">Random Army</button>
+
+  <h2>Choose Role</h2>
+
+  <button class="roleBtn" data-role="warrior">Warrior</button>
+  <button class="roleBtn" data-role="healer">Healer</button>
+  <button class="roleBtn" data-role="tank">Tank</button>
+  <button class="roleBtn" data-role="trickster">Trickster</button>
+
+  <p id="roleDescription">
+    Warrior: attacks x2<br>
+    Healer: heals x2<br>
+    Tank: shield / heavy hit<br>
+    Trickster: erases an enemy question briefly
+  </p>
 </div>
 
 <!-- GAME -->
