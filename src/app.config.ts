@@ -13,16 +13,18 @@ import { fileURLToPath } from "url";
 
 import { TournamentRoom } from "./rooms/TournamentRoom.js";
 import { SinglePlayerControllerRoom } from "./rooms/SinglePlayerControllerRoom.js";
+import { MultiplayerRoom } from "./rooms/MultiplayerRoom.js";
 
 // Needed for proper path resolution
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const server = defineServer({
-    rooms: {
-        tournament: defineRoom(TournamentRoom),
-        singleplayer_controller: defineRoom(SinglePlayerControllerRoom),
-    },
+rooms: {
+    tournament: defineRoom(TournamentRoom),
+    singleplayer_controller: defineRoom(SinglePlayerControllerRoom),
+    multiplayer: defineRoom(MultiplayerRoom),
+},
 
     routes: createRouter({
         api_hello: createEndpoint("/api/hello", { method: "GET" }, async () => {
