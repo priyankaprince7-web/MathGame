@@ -181,8 +181,24 @@ export class MultiplayerRoom extends Room {
 
     this.broadcast("roundStarted", {
       roundNumber: this.roundNumber,
-      players: this.activePlayerIds,
-      matches: this.activeMatches,
+      players: this.activePlayerIds.map(id => {
+        const p = this.state.players.get(id);
+        return {
+          id,
+          name: p?.name || "Player"
+        };
+      }),
+      matches: this.activeMatches.map(m => {
+        const a = this.state.players.get(m.playerAId);
+        const b = this.state.players.get(m.playerBId);
+
+        return {
+          playerAId: m.playerAId,
+          playerAName: a?.name || "Player A",
+          playerBId: m.playerBId,
+          playerBName: b?.name || "Player B"
+        };
+      }),
       startingHealth: this.state.startingHealth,
       timerEnabled: this.state.timerEnabled,
       timerMinutes: this.state.timerMinutes,
@@ -283,11 +299,19 @@ export class MultiplayerRoom extends Room {
     if (opponent.health <= 0) {
       this.eliminatedIds.add(opponent.id);
 
-      this.broadcast("matchEnded", {
+      const attackerClient = this.clients.find(c => c.sessionId === attacker.id);
+      const opponentClient = this.clients.find(c => c.sessionId === opponent.id);
+
+      const matchEndedData = {
         winnerId: attacker.id,
         winnerName: attacker.name,
         loserId: opponent.id
-      });
+      };
+
+      attackerClient?.send("matchEnded", matchEndedData);
+      opponentClient?.send("matchEnded", matchEndedData);
+
+      this.broadcast("hostMatchEnded", matchEndedData);
 
       this.checkRoundComplete();
     }
@@ -334,6 +358,10 @@ export class MultiplayerRoom extends Room {
 
       if (!inMatch) survivors.push(id);
     }
+
+    this.broadcast("roundEnded", {
+      survivors
+    });
 
     setTimeout(() => {
       this.startNextRound(survivors);
