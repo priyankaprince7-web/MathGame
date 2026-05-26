@@ -36,7 +36,6 @@ export class MultiplayerRoom extends Room {
   private questionIndex = 0;
 
   private roundTimer: NodeJS.Timeout | null = null;
-  private questionTimer: NodeJS.Timeout | null = null;
   private roundEndsAt = 0;
 
   onCreate(options: any) {
@@ -48,8 +47,13 @@ export class MultiplayerRoom extends Room {
     this.state.requiredPlayers = Math.max(2, Math.min(32, Number(options?.requiredPlayers ?? 2)));
     this.state.teamCount = Math.max(0, Math.min(8, Number(options?.teamCount ?? 0)));
     this.state.potMode = options?.potMode || "shared";
+
     this.state.startingHealth = Math.max(10, Math.min(100, Number(options?.startingHealth ?? 20)));
     this.state.timerMinutes = Math.max(0, Math.min(10, Number(options?.timerMinutes ?? 3)));
+
+    this.state.timerEnabled = options?.timerEnabled !== false;
+    this.state.healingEnabled = options?.healingEnabled !== false;
+    this.state.difficulty = options?.difficulty || "easy";
 
     this.onMessage("joinLobby", (client, message: { name?: string }) => {
       const player = this.state.players.get(client.sessionId);
@@ -98,6 +102,15 @@ export class MultiplayerRoom extends Room {
 
     if (role === "player") {
       client.send("controllerMode", "solo_multiplayer");
+      client.send("multiplayerSettings", {
+        mode: this.state.mode,
+        requiredPlayers: this.state.requiredPlayers,
+        startingHealth: this.state.startingHealth,
+        timerEnabled: this.state.timerEnabled,
+        timerMinutes: this.state.timerMinutes,
+        healingEnabled: this.state.healingEnabled,
+        difficulty: this.state.difficulty
+      });
     }
 
     this.broadcastPlayers();
@@ -149,22 +162,33 @@ export class MultiplayerRoom extends Room {
 
     this.questionIndex = 0;
 
-    this.broadcast("gameStarted");
-    this.broadcast("roundStarted", {
-      roundNumber: this.roundNumber,
-      players: this.activePlayerIds,
-      matches: this.activeMatches
-    });
+    if (this.roundTimer) {
+      clearTimeout(this.roundTimer);
+      this.roundTimer = null;
+    }
 
-    this.roundEndsAt = Date.now() + this.state.timerMinutes * 60 * 1000;
+    this.roundEndsAt = this.state.timerEnabled
+      ? Date.now() + this.state.timerMinutes * 60 * 1000
+      : 0;
 
-    if (this.roundTimer) clearTimeout(this.roundTimer);
-
-    if (this.state.timerMinutes > 0) {
+    if (this.state.timerEnabled && this.state.timerMinutes > 0) {
       this.roundTimer = setTimeout(() => {
         this.finishRoundByHealth();
       }, this.state.timerMinutes * 60 * 1000);
     }
+
+    this.broadcast("gameStarted");
+
+    this.broadcast("roundStarted", {
+      roundNumber: this.roundNumber,
+      players: this.activePlayerIds,
+      matches: this.activeMatches,
+      startingHealth: this.state.startingHealth,
+      timerEnabled: this.state.timerEnabled,
+      timerMinutes: this.state.timerMinutes,
+      healingEnabled: this.state.healingEnabled,
+      difficulty: this.state.difficulty
+    });
 
     this.sendNextQuestion();
     this.broadcastGameState();
@@ -178,7 +202,6 @@ export class MultiplayerRoom extends Room {
       const b = playerIds[i + 1];
 
       if (!b) {
-        // Bye: player automatically survives
         continue;
       }
 
@@ -226,13 +249,15 @@ export class MultiplayerRoom extends Room {
 
     player.questionIndex++;
     player.storedDamage += 2;
-    player.healCharge = Math.min(player.healCharge + 1, 10);
+
+    if (this.state.healingEnabled) {
+      player.healCharge = Math.min(player.healCharge + 1, 10);
+    }
 
     client.send("answerFeedback", { message: "Correct! Attack charged." });
 
     this.broadcastGameState();
 
-    // Everyone gets the same next question after a correct answer.
     this.sendNextQuestion();
   }
 
@@ -271,6 +296,8 @@ export class MultiplayerRoom extends Room {
   }
 
   private handleHeal(client: Client) {
+    if (!this.state.healingEnabled) return;
+
     const player = this.state.players.get(client.sessionId);
     if (!player || player.healCharge <= 0) return;
 
@@ -300,9 +327,11 @@ export class MultiplayerRoom extends Room {
       else return;
     }
 
-    // Add bye players
     for (const id of this.activePlayerIds) {
-      const inMatch = this.activeMatches.some(m => m.playerAId === id || m.playerBId === id);
+      const inMatch = this.activeMatches.some(m =>
+        m.playerAId === id || m.playerBId === id
+      );
+
       if (!inMatch) survivors.push(id);
     }
 
@@ -312,6 +341,8 @@ export class MultiplayerRoom extends Room {
   }
 
   private finishRoundByHealth() {
+    if (this.state.status !== "in_match") return;
+
     const survivors: string[] = [];
 
     for (const match of this.activeMatches) {
@@ -325,7 +356,10 @@ export class MultiplayerRoom extends Room {
     }
 
     for (const id of this.activePlayerIds) {
-      const inMatch = this.activeMatches.some(m => m.playerAId === id || m.playerBId === id);
+      const inMatch = this.activeMatches.some(m =>
+        m.playerAId === id || m.playerBId === id
+      );
+
       if (!inMatch) survivors.push(id);
     }
 
@@ -333,7 +367,10 @@ export class MultiplayerRoom extends Room {
   }
 
   private endTournament(winnerId?: string) {
-    if (this.roundTimer) clearTimeout(this.roundTimer);
+    if (this.roundTimer) {
+      clearTimeout(this.roundTimer);
+      this.roundTimer = null;
+    }
 
     const winner = winnerId ? this.state.players.get(winnerId) : null;
 
@@ -360,8 +397,6 @@ export class MultiplayerRoom extends Room {
   }
 
   private broadcastGameState() {
-    const allPlayers = this.getPlayers();
-
     for (const client of this.clients) {
       const me = this.state.players.get(client.sessionId);
       if (!me || me.role !== "player") continue;
@@ -370,9 +405,11 @@ export class MultiplayerRoom extends Room {
 
       client.send("gameState", {
         startingHealth: this.state.startingHealth,
-        healingEnabled: true,
-        timerEnabled: this.state.timerMinutes > 0,
-        timeRemainingMs: Math.max(0, this.roundEndsAt - Date.now()),
+        healingEnabled: this.state.healingEnabled,
+        timerEnabled: this.state.timerEnabled,
+        timeRemainingMs: this.state.timerEnabled
+          ? Math.max(0, this.roundEndsAt - Date.now())
+          : -1,
         players: [
           {
             id: me.id,
@@ -394,12 +431,47 @@ export class MultiplayerRoom extends Room {
   }
 
   private generateQuestion(): Question {
-    const types = ["add", "subtract", "multiply", "divide", "bedmas"];
+    const difficulty = this.state.difficulty || "easy";
+
+    if (difficulty === "easy") {
+      return this.generateEasyQuestion();
+    }
+
+    if (difficulty === "medium") {
+      return this.generateMediumQuestion();
+    }
+
+    return this.generateHardQuestion();
+  }
+
+  private generateEasyQuestion(): Question {
+    const types = ["add", "subtract"];
     const type = types[Math.floor(Math.random() * types.length)];
 
-    let a = this.rand(1, 12);
-    let b = this.rand(1, 12);
-    let c = this.rand(1, 6);
+    let a = this.rand(1, 20);
+    let b = this.rand(1, 20);
+
+    if (type === "add") {
+      return {
+        prompt: `${a} + ${b}`,
+        answer: a + b
+      };
+    }
+
+    if (b > a) [a, b] = [b, a];
+
+    return {
+      prompt: `${a} - ${b}`,
+      answer: a - b
+    };
+  }
+
+  private generateMediumQuestion(): Question {
+    const types = ["add", "subtract", "multiply", "divide"];
+    const type = types[Math.floor(Math.random() * types.length)];
+
+    let a = this.rand(2, 12);
+    let b = this.rand(2, 12);
 
     if (type === "add") {
       return {
@@ -424,20 +496,40 @@ export class MultiplayerRoom extends Room {
       };
     }
 
-    if (type === "divide") {
-      const answer = this.rand(1, 12);
-      const divisor = this.rand(1, 12);
-      const dividend = answer * divisor;
+    const answer = this.rand(2, 12);
+    const divisor = this.rand(2, 12);
 
+    return {
+      prompt: `${answer * divisor} ÷ ${divisor}`,
+      answer
+    };
+  }
+
+  private generateHardQuestion(): Question {
+    const types = ["bedmas1", "bedmas2", "bedmas3"];
+    const type = types[Math.floor(Math.random() * types.length)];
+
+    const a = this.rand(2, 12);
+    const b = this.rand(2, 12);
+    const c = this.rand(2, 8);
+
+    if (type === "bedmas1") {
       return {
-        prompt: `${dividend} ÷ ${divisor}`,
-        answer
+        prompt: `${a} + ${b} × ${c}`,
+        answer: a + b * c
+      };
+    }
+
+    if (type === "bedmas2") {
+      return {
+        prompt: `(${a} + ${b}) × ${c}`,
+        answer: (a + b) * c
       };
     }
 
     return {
-      prompt: `${a} + ${b} × ${c}`,
-      answer: a + b * c
+      prompt: `${a} × ${b} - ${c}`,
+      answer: a * b - c
     };
   }
 

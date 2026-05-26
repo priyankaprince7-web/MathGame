@@ -29,6 +29,10 @@ export class MultiplayerState extends Schema {
   @type("number") startingHealth: number = 20;
   @type("number") timerMinutes: number = 3;
 
+  @type("boolean") timerEnabled: boolean = true;
+  @type("boolean") healingEnabled: boolean = true;
+  @type("string") difficulty: string = "easy";
+
   @type({ map: MultiplayerPlayerState })
   players = new MapSchema<MultiplayerPlayerState>();
 }
