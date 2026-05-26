@@ -3,13 +3,22 @@ import { MultiplayerState, MultiplayerPlayerState } from "./schema/MultiplayerSt
 
 type Role = "host" | "player";
 
+type Question = {
+  prompt: string;
+  answer: number;
+};
+
+type MatchPair = {
+  playerAId: string;
+  playerBId: string;
+};
+
 function makeRoomCode(length = 5) {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
 
-  for (let i = 0; i < length; i++) {
+  for (let i = 0; i < length; i++)
     code += chars[Math.floor(Math.random() * chars.length)];
-  }
 
   return code;
 }
@@ -17,6 +26,18 @@ function makeRoomCode(length = 5) {
 export class MultiplayerRoom extends Room {
   maxClients = 33;
   state = new MultiplayerState();
+
+  private activeMatches: MatchPair[] = [];
+  private activePlayerIds: string[] = [];
+  private eliminatedIds = new Set<string>();
+
+  private roundNumber = 0;
+  private currentQuestion: Question | null = null;
+  private questionIndex = 0;
+
+  private roundTimer: NodeJS.Timeout | null = null;
+  private questionTimer: NodeJS.Timeout | null = null;
+  private roundEndsAt = 0;
 
   onCreate(options: any) {
     this.roomId = makeRoomCode();
@@ -37,58 +58,8 @@ export class MultiplayerRoom extends Room {
       player.name = message?.name?.trim() || "Player";
       player.connected = true;
 
-      if (this.state.mode === "solo") {
-        player.teamId = 0;
-      }
-
       this.broadcastPlayers();
       this.broadcastStatus(`${player.name} joined`);
-    });
-
-  this.onMessage("chooseTeam", (client, message: { teamId?: number }) => {
-    const player = this.state.players.get(client.sessionId);
-    if (!player || player.role !== "player") return;
-
-    const teamId = Number(message?.teamId ?? 1);
-    const clampedTeamId = Math.max(1, Math.min(this.state.teamCount, teamId));
-
-    const teamLimit = this.getTeamLimit();
-
-    const currentTeamPlayers = this.getPlayers().filter(
-      p => p.teamId === clampedTeamId && p.id !== player.id
-    );
-
-    if (currentTeamPlayers.length >= teamLimit) {
-      client.send("statusMessage", `Army ${clampedTeamId} is full`);
-      return;
-    }
-
-    player.teamId = clampedTeamId;
-
-    this.broadcastPlayers();
-    this.checkTeamSetupReady();
-  });
-
-    this.onMessage("randomTeams", () => {
-      this.assignRandomTeams();
-      this.broadcastPlayers();
-      this.checkTeamSetupReady();
-    });
-
-    this.onMessage("chooseClass", (client, message: { classRole?: string }) => {
-      const player = this.state.players.get(client.sessionId);
-      if (!player || player.role !== "player") return;
-
-      const allowed = ["warrior", "healer", "tank", "trickster"];
-      const role = message?.classRole || "";
-
-      if (!allowed.includes(role)) return;
-
-      player.classRole = role;
-      player.roleReady = true;
-
-      this.broadcastPlayers();
-      this.checkTeamSetupReady();
     });
 
     this.onMessage("startGame", () => {
@@ -97,9 +68,19 @@ export class MultiplayerRoom extends Room {
         return;
       }
 
-      this.state.status = "in_match";
-      this.broadcast("gameStarted");
-      this.broadcastStatus("Game starting...");
+      this.startKnockoutTournament();
+    });
+
+    this.onMessage("submitAnswer", (client, message: { answer?: string }) => {
+      this.handleSubmitAnswer(client, message);
+    });
+
+    this.onMessage("attack", (client) => {
+      this.handleAttack(client);
+    });
+
+    this.onMessage("heal", (client) => {
+      this.handleHeal(client);
     });
   }
 
@@ -116,13 +97,7 @@ export class MultiplayerRoom extends Room {
     this.state.players.set(client.sessionId, player);
 
     if (role === "player") {
-      client.send("controllerMode", this.state.mode === "team" ? "team_multiplayer" : "solo_multiplayer");
-      client.send("multiplayerSettings", {
-        mode: this.state.mode,
-        requiredPlayers: this.state.requiredPlayers,
-        teamCount: this.state.teamCount,
-        potMode: this.state.potMode
-      });
+      client.send("controllerMode", "solo_multiplayer");
     }
 
     this.broadcastPlayers();
@@ -130,7 +105,355 @@ export class MultiplayerRoom extends Room {
 
   onLeave(client: Client) {
     this.state.players.delete(client.sessionId);
+    this.eliminatedIds.add(client.sessionId);
     this.broadcastPlayers();
+  }
+
+  private startKnockoutTournament() {
+    this.state.status = "in_match";
+    this.roundNumber = 0;
+    this.eliminatedIds.clear();
+
+    this.activePlayerIds = this.shuffle(
+      this.getPlayers().map(p => p.id)
+    );
+
+    this.startNextRound(this.activePlayerIds);
+  }
+
+  private startNextRound(playerIds: string[]) {
+    this.roundNumber++;
+
+    const survivors = playerIds.filter(id => {
+      const p = this.state.players.get(id);
+      return p && !this.eliminatedIds.has(id);
+    });
+
+    if (survivors.length <= 1) {
+      this.endTournament(survivors[0]);
+      return;
+    }
+
+    this.activePlayerIds = this.shuffle(survivors);
+    this.activeMatches = this.createPairs(this.activePlayerIds);
+
+    for (const id of this.activePlayerIds) {
+      const p = this.state.players.get(id);
+      if (!p) continue;
+
+      p.health = this.state.startingHealth;
+      p.storedDamage = 0;
+      p.healCharge = 0;
+      p.questionIndex = 0;
+    }
+
+    this.questionIndex = 0;
+
+    this.broadcast("gameStarted");
+    this.broadcast("roundStarted", {
+      roundNumber: this.roundNumber,
+      players: this.activePlayerIds,
+      matches: this.activeMatches
+    });
+
+    this.roundEndsAt = Date.now() + this.state.timerMinutes * 60 * 1000;
+
+    if (this.roundTimer) clearTimeout(this.roundTimer);
+
+    if (this.state.timerMinutes > 0) {
+      this.roundTimer = setTimeout(() => {
+        this.finishRoundByHealth();
+      }, this.state.timerMinutes * 60 * 1000);
+    }
+
+    this.sendNextQuestion();
+    this.broadcastGameState();
+  }
+
+  private createPairs(playerIds: string[]) {
+    const pairs: MatchPair[] = [];
+
+    for (let i = 0; i < playerIds.length; i += 2) {
+      const a = playerIds[i];
+      const b = playerIds[i + 1];
+
+      if (!b) {
+        // Bye: player automatically survives
+        continue;
+      }
+
+      pairs.push({
+        playerAId: a,
+        playerBId: b
+      });
+    }
+
+    return pairs;
+  }
+
+  private sendNextQuestion() {
+    this.questionIndex++;
+    this.currentQuestion = this.generateQuestion();
+
+    for (const id of this.activePlayerIds) {
+      const client = this.clients.find(c => c.sessionId === id);
+      if (!client) continue;
+
+      client.send("question", {
+        index: this.questionIndex,
+        prompt: this.currentQuestion.prompt
+      });
+    }
+  }
+
+  private handleSubmitAnswer(client: Client, message: { answer?: string }) {
+    const player = this.state.players.get(client.sessionId);
+    if (!player || !this.currentQuestion) return;
+
+    if (this.eliminatedIds.has(player.id)) return;
+
+    const submitted = Number(message?.answer);
+
+    if (!Number.isFinite(submitted)) {
+      client.send("answerFeedback", { message: "Enter a number." });
+      return;
+    }
+
+    if (submitted !== this.currentQuestion.answer) {
+      client.send("answerFeedback", { message: "Not quite!" });
+      return;
+    }
+
+    player.questionIndex++;
+    player.storedDamage += 2;
+    player.healCharge = Math.min(player.healCharge + 1, 10);
+
+    client.send("answerFeedback", { message: "Correct! Attack charged." });
+
+    this.broadcastGameState();
+
+    // Everyone gets the same next question after a correct answer.
+    this.sendNextQuestion();
+  }
+
+  private handleAttack(client: Client) {
+    const attacker = this.state.players.get(client.sessionId);
+    if (!attacker || attacker.storedDamage <= 0) return;
+
+    const opponent = this.getOpponent(attacker.id);
+    if (!opponent) return;
+
+    const damage = attacker.storedDamage;
+    attacker.storedDamage = 0;
+
+    opponent.health = Math.max(0, opponent.health - damage);
+
+    this.broadcast("attackResult", {
+      attackerId: attacker.id,
+      attackerName: attacker.name,
+      defenderId: opponent.id,
+      damage
+    });
+
+    if (opponent.health <= 0) {
+      this.eliminatedIds.add(opponent.id);
+
+      this.broadcast("matchEnded", {
+        winnerId: attacker.id,
+        winnerName: attacker.name,
+        loserId: opponent.id
+      });
+
+      this.checkRoundComplete();
+    }
+
+    this.broadcastGameState();
+  }
+
+  private handleHeal(client: Client) {
+    const player = this.state.players.get(client.sessionId);
+    if (!player || player.healCharge <= 0) return;
+
+    const healAmount = player.healCharge;
+    player.healCharge = 0;
+
+    player.health = Math.min(this.state.startingHealth, player.health + healAmount);
+
+    client.send("answerFeedback", {
+      message: `Healed for ${healAmount}!`
+    });
+
+    this.broadcastGameState();
+  }
+
+  private checkRoundComplete() {
+    const survivors: string[] = [];
+
+    for (const match of this.activeMatches) {
+      const a = this.state.players.get(match.playerAId);
+      const b = this.state.players.get(match.playerBId);
+
+      if (!a || !b) continue;
+
+      if (a.health > 0 && b.health <= 0) survivors.push(a.id);
+      else if (b.health > 0 && a.health <= 0) survivors.push(b.id);
+      else return;
+    }
+
+    // Add bye players
+    for (const id of this.activePlayerIds) {
+      const inMatch = this.activeMatches.some(m => m.playerAId === id || m.playerBId === id);
+      if (!inMatch) survivors.push(id);
+    }
+
+    setTimeout(() => {
+      this.startNextRound(survivors);
+    }, 2500);
+  }
+
+  private finishRoundByHealth() {
+    const survivors: string[] = [];
+
+    for (const match of this.activeMatches) {
+      const a = this.state.players.get(match.playerAId);
+      const b = this.state.players.get(match.playerBId);
+
+      if (!a || !b) continue;
+
+      if (a.health >= b.health) survivors.push(a.id);
+      else survivors.push(b.id);
+    }
+
+    for (const id of this.activePlayerIds) {
+      const inMatch = this.activeMatches.some(m => m.playerAId === id || m.playerBId === id);
+      if (!inMatch) survivors.push(id);
+    }
+
+    this.startNextRound(survivors);
+  }
+
+  private endTournament(winnerId?: string) {
+    if (this.roundTimer) clearTimeout(this.roundTimer);
+
+    const winner = winnerId ? this.state.players.get(winnerId) : null;
+
+    this.state.status = "ended";
+
+    this.broadcast("matchEnded", {
+      winnerId: winner?.id || "",
+      winnerName: winner?.name || "Winner"
+    });
+  }
+
+  private getOpponent(playerId: string) {
+    const match = this.activeMatches.find(m =>
+      m.playerAId === playerId || m.playerBId === playerId
+    );
+
+    if (!match) return null;
+
+    const opponentId = match.playerAId === playerId
+      ? match.playerBId
+      : match.playerAId;
+
+    return this.state.players.get(opponentId) || null;
+  }
+
+  private broadcastGameState() {
+    const allPlayers = this.getPlayers();
+
+    for (const client of this.clients) {
+      const me = this.state.players.get(client.sessionId);
+      if (!me || me.role !== "player") continue;
+
+      const opponent = this.getOpponent(me.id);
+
+      client.send("gameState", {
+        startingHealth: this.state.startingHealth,
+        healingEnabled: true,
+        timerEnabled: this.state.timerMinutes > 0,
+        timeRemainingMs: Math.max(0, this.roundEndsAt - Date.now()),
+        players: [
+          {
+            id: me.id,
+            name: me.name,
+            health: me.health,
+            storedDamage: me.storedDamage,
+            healCharge: me.healCharge
+          },
+          opponent ? {
+            id: opponent.id,
+            name: opponent.name,
+            health: opponent.health,
+            storedDamage: opponent.storedDamage,
+            healCharge: opponent.healCharge
+          } : null
+        ].filter(Boolean)
+      });
+    }
+  }
+
+  private generateQuestion(): Question {
+    const types = ["add", "subtract", "multiply", "divide", "bedmas"];
+    const type = types[Math.floor(Math.random() * types.length)];
+
+    let a = this.rand(1, 12);
+    let b = this.rand(1, 12);
+    let c = this.rand(1, 6);
+
+    if (type === "add") {
+      return {
+        prompt: `${a} + ${b}`,
+        answer: a + b
+      };
+    }
+
+    if (type === "subtract") {
+      if (b > a) [a, b] = [b, a];
+
+      return {
+        prompt: `${a} - ${b}`,
+        answer: a - b
+      };
+    }
+
+    if (type === "multiply") {
+      return {
+        prompt: `${a} × ${b}`,
+        answer: a * b
+      };
+    }
+
+    if (type === "divide") {
+      const answer = this.rand(1, 12);
+      const divisor = this.rand(1, 12);
+      const dividend = answer * divisor;
+
+      return {
+        prompt: `${dividend} ÷ ${divisor}`,
+        answer
+      };
+    }
+
+    return {
+      prompt: `${a} + ${b} × ${c}`,
+      answer: a + b * c
+    };
+  }
+
+  private rand(min: number, max: number) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  private shuffle<T>(items: T[]) {
+    const copy = [...items];
+
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+
+    return copy;
   }
 
   getPlayers() {
@@ -150,88 +473,18 @@ export class MultiplayerRoom extends Room {
     this.broadcast("updatePlayers", players);
 
     if (this.getPlayers().length >= this.state.requiredPlayers) {
-      if (this.state.mode === "team") {
-        this.broadcast("teamSetupReady");
-        this.broadcastStatus("Choose armies and roles");
-      } else {
-        this.broadcastStatus("Ready to start!");
-      }
+      this.broadcastStatus("Ready to start!");
     } else {
       this.broadcastStatus(`Waiting for ${this.state.requiredPlayers} players`);
-    }
-
-    this.broadcast("teamInfo", {
-      teamCount: this.state.teamCount,
-      teamLimit: this.getTeamLimit(),
-      requiredPlayers: this.state.requiredPlayers
-    });
-
-  }
-
-  assignRandomTeams() {
-    const players = this.getPlayers();
-    const teamLimit = this.getTeamLimit();
-
-    const teamCounts = new Map<number, number>();
-
-    for (let i = 1; i <= this.state.teamCount; i++) {
-      teamCounts.set(i, 0);
-    }
-
-    for (const p of players) {
-      const availableTeams = [];
-
-      for (let i = 1; i <= this.state.teamCount; i++) {
-        if ((teamCounts.get(i) ?? 0) < teamLimit) {
-          availableTeams.push(i);
-        }
-      }
-
-      if (availableTeams.length === 0) return;
-
-      const randomTeam =
-        availableTeams[Math.floor(Math.random() * availableTeams.length)];
-
-      p.teamId = randomTeam;
-      teamCounts.set(randomTeam, (teamCounts.get(randomTeam) ?? 0) + 1);
-    }
-  }
-
-  checkTeamSetupReady() {
-    if (this.state.mode !== "team") return;
-
-    const players = this.getPlayers();
-
-    const ready =
-      players.length >= this.state.requiredPlayers &&
-      players.every(p => p.teamId > 0 && p.roleReady);
-
-    if (ready) {
-      this.broadcast("allRolesReady");
-      this.broadcastStatus("All armies ready!");
     }
   }
 
   canStart() {
     const players = this.getPlayers();
-
-    if (players.length < this.state.requiredPlayers)
-      return false;
-
-    if (this.state.mode === "solo")
-      return true;
-
-    return players.every(p => p.teamId > 0 && p.roleReady);
+    return players.length >= this.state.requiredPlayers;
   }
 
   broadcastStatus(message: string) {
     this.broadcast("statusMessage", message);
   }
-
-  getTeamLimit() {
-    if (this.state.teamCount <= 0) return this.state.requiredPlayers;
-    return Math.ceil(this.state.requiredPlayers / this.state.teamCount);
-  }
-
-
 }
