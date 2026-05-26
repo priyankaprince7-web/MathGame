@@ -32,8 +32,7 @@ export class MultiplayerRoom extends Room {
   private eliminatedIds = new Set<string>();
 
   private roundNumber = 0;
-  private currentQuestion: Question | null = null;
-  private questionIndex = 0;
+  private questionBank: Question[] = [];
 
   private roundTimer: NodeJS.Timeout | null = null;
   private roundEndsAt = 0;
@@ -150,6 +149,8 @@ export class MultiplayerRoom extends Room {
     this.activePlayerIds = this.shuffle(survivors);
     this.activeMatches = this.createPairs(this.activePlayerIds);
 
+    this.buildQuestionBank(100);
+
     for (const id of this.activePlayerIds) {
       const p = this.state.players.get(id);
       if (!p) continue;
@@ -159,8 +160,6 @@ export class MultiplayerRoom extends Room {
       p.healCharge = 0;
       p.questionIndex = 0;
     }
-
-    this.questionIndex = 0;
 
     if (this.roundTimer) {
       clearTimeout(this.roundTimer);
@@ -183,9 +182,11 @@ export class MultiplayerRoom extends Room {
       roundNumber: this.roundNumber,
       players: this.activePlayerIds.map(id => {
         const p = this.state.players.get(id);
+
         return {
           id,
-          name: p?.name || "Player"
+          name: p?.name || "Player",
+          playerNumber: this.getPlayerNumber(id)
         };
       }),
       matches: this.activeMatches.map(m => {
@@ -195,8 +196,11 @@ export class MultiplayerRoom extends Room {
         return {
           playerAId: m.playerAId,
           playerAName: a?.name || "Player A",
+          playerANumber: this.getPlayerNumber(m.playerAId),
+
           playerBId: m.playerBId,
-          playerBName: b?.name || "Player B"
+          playerBName: b?.name || "Player B",
+          playerBNumber: this.getPlayerNumber(m.playerBId)
         };
       }),
       startingHealth: this.state.startingHealth,
@@ -206,7 +210,7 @@ export class MultiplayerRoom extends Room {
       difficulty: this.state.difficulty
     });
 
-    this.sendNextQuestion();
+    this.sendQuestionsToAllActivePlayers();
     this.broadcastGameState();
   }
 
@@ -217,9 +221,7 @@ export class MultiplayerRoom extends Room {
       const a = playerIds[i];
       const b = playerIds[i + 1];
 
-      if (!b) {
-        continue;
-      }
+      if (!b) continue;
 
       pairs.push({
         playerAId: a,
@@ -230,26 +232,45 @@ export class MultiplayerRoom extends Room {
     return pairs;
   }
 
-  private sendNextQuestion() {
-    this.questionIndex++;
-    this.currentQuestion = this.generateQuestion();
+  private buildQuestionBank(count: number) {
+    this.questionBank = [];
 
-    for (const id of this.activePlayerIds) {
-      const client = this.clients.find(c => c.sessionId === id);
-      if (!client) continue;
-
-      client.send("question", {
-        index: this.questionIndex,
-        prompt: this.currentQuestion.prompt
-      });
+    for (let i = 0; i < count; i++) {
+      this.questionBank.push(this.generateQuestion());
     }
+  }
+
+  private sendQuestionsToAllActivePlayers() {
+    for (const id of this.activePlayerIds) {
+      if (this.eliminatedIds.has(id)) continue;
+      this.sendQuestionToPlayer(id);
+    }
+  }
+
+  private sendQuestionToPlayer(playerId: string) {
+    const player = this.state.players.get(playerId);
+    if (!player) return;
+
+    const client = this.clients.find(c => c.sessionId === playerId);
+    if (!client) return;
+
+    const question = this.questionBank[player.questionIndex];
+    if (!question) return;
+
+    client.send("question", {
+      index: player.questionIndex + 1,
+      prompt: question.prompt
+    });
   }
 
   private handleSubmitAnswer(client: Client, message: { answer?: string }) {
     const player = this.state.players.get(client.sessionId);
-    if (!player || !this.currentQuestion) return;
+    if (!player) return;
 
     if (this.eliminatedIds.has(player.id)) return;
+
+    const question = this.questionBank[player.questionIndex];
+    if (!question) return;
 
     const submitted = Number(message?.answer);
 
@@ -258,23 +279,23 @@ export class MultiplayerRoom extends Room {
       return;
     }
 
-    if (submitted !== this.currentQuestion.answer) {
+    if (submitted !== question.answer) {
       client.send("answerFeedback", { message: "Not quite!" });
       return;
     }
 
-    player.questionIndex++;
     player.storedDamage += 2;
 
     if (this.state.healingEnabled) {
       player.healCharge = Math.min(player.healCharge + 1, 10);
     }
 
+    player.questionIndex++;
+
     client.send("answerFeedback", { message: "Correct! Attack charged." });
 
     this.broadcastGameState();
-
-    this.sendNextQuestion();
+    this.sendQuestionToPlayer(player.id);
   }
 
   private handleAttack(client: Client) {
@@ -559,6 +580,13 @@ export class MultiplayerRoom extends Room {
       prompt: `${a} × ${b} - ${c}`,
       answer: a * b - c
     };
+  }
+
+  private getPlayerNumber(playerId: string) {
+    const players = this.getPlayers();
+    const index = players.findIndex(p => p.id === playerId);
+
+    return index >= 0 ? index + 1 : 1;
   }
 
   private rand(min: number, max: number) {
