@@ -35,6 +35,7 @@ export class MultiplayerRoom extends Room {
   private questionBank: Question[] = [];
 
   private roundTimer: NodeJS.Timeout | null = null;
+  private timerInterval: NodeJS.Timeout | null = null;
   private roundEndsAt = 0;
 
   onCreate(options: any) {
@@ -122,6 +123,8 @@ export class MultiplayerRoom extends Room {
   }
 
   private startKnockoutTournament() {
+    this.clearRoundTimers();
+
     this.state.status = "in_match";
     this.roundNumber = 0;
     this.eliminatedIds.clear();
@@ -134,6 +137,8 @@ export class MultiplayerRoom extends Room {
   }
 
   private startNextRound(playerIds: string[]) {
+    this.clearRoundTimers();
+
     this.roundNumber++;
 
     const survivors = playerIds.filter(id => {
@@ -161,11 +166,6 @@ export class MultiplayerRoom extends Room {
       p.questionIndex = 0;
     }
 
-    if (this.roundTimer) {
-      clearTimeout(this.roundTimer);
-      this.roundTimer = null;
-    }
-
     this.roundEndsAt = this.state.timerEnabled
       ? Date.now() + this.state.timerMinutes * 60 * 1000
       : 0;
@@ -174,6 +174,16 @@ export class MultiplayerRoom extends Room {
       this.roundTimer = setTimeout(() => {
         this.finishRoundByHealth();
       }, this.state.timerMinutes * 60 * 1000);
+
+      this.timerInterval = setInterval(() => {
+        if (this.state.status !== "in_match") return;
+
+        this.broadcastGameState();
+
+        if (Date.now() >= this.roundEndsAt) {
+          this.clearTimerIntervalOnly();
+        }
+      }, 1000);
     }
 
     this.broadcast("gameStarted");
@@ -380,6 +390,8 @@ export class MultiplayerRoom extends Room {
       if (!inMatch) survivors.push(id);
     }
 
+    this.clearRoundTimers();
+
     this.broadcast("roundEnded", {
       survivors
     });
@@ -391,6 +403,8 @@ export class MultiplayerRoom extends Room {
 
   private finishRoundByHealth() {
     if (this.state.status !== "in_match") return;
+
+    this.clearRoundTimers();
 
     const survivors: string[] = [];
 
@@ -412,23 +426,46 @@ export class MultiplayerRoom extends Room {
       if (!inMatch) survivors.push(id);
     }
 
-    this.startNextRound(survivors);
+    this.broadcast("roundEnded", {
+      survivors
+    });
+
+    setTimeout(() => {
+      this.startNextRound(survivors);
+    }, 2500);
   }
 
   private endTournament(winnerId?: string) {
-    if (this.roundTimer) {
-      clearTimeout(this.roundTimer);
-      this.roundTimer = null;
-    }
+    this.clearRoundTimers();
 
     const winner = winnerId ? this.state.players.get(winnerId) : null;
 
     this.state.status = "ended";
 
-    this.broadcast("matchEnded", {
+    this.broadcast("tournamentEnded", {
       winnerId: winner?.id || "",
-      winnerName: winner?.name || "Winner"
+      winnerName: winner?.name || "Winner",
+      winnerNumber: winnerId ? this.getPlayerNumber(winnerId) : 1
     });
+  }
+
+  private clearRoundTimers() {
+    if (this.roundTimer) {
+      clearTimeout(this.roundTimer);
+      this.roundTimer = null;
+    }
+
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+  }
+
+  private clearTimerIntervalOnly() {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
   }
 
   private getOpponent(playerId: string) {
