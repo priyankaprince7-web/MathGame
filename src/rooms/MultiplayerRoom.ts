@@ -639,18 +639,30 @@ export class MultiplayerRoom extends Room {
         this.finishRoundByHealth();
       }, this.state.timerMinutes * 60 * 1000);
 
-      this.timerInterval = setInterval(() => {
-        if (this.state.status !== "in_match") return;
-        this.broadcastGameState();
-      }, 1000);
+    this.timerInterval = setInterval(() => {
+      if (this.state.status !== "in_match") return;
+
+      this.broadcastGameState();
+      this.broadcastHostTimer();
+    }, 1000);
     }
 
     this.sendQuestionsToAllActivePlayers();
     this.broadcastGameState();
+    this.broadcastHostTimer();
   }
 
   getPlayers() {
     return Array.from(this.state.players.values()).filter(p => p.role === "player");
+  }
+
+  private broadcastHostTimer() {
+      this.broadcast("hostTimer", {
+      timerEnabled: this.state.timerEnabled,
+      timeRemainingMs: this.state.timerEnabled
+        ? Math.max(0, this.roundEndsAt - Date.now())
+        : -1
+    });
   }
 
   broadcastPlayers() {
