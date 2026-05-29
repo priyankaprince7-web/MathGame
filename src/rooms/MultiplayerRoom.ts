@@ -86,6 +86,10 @@ export class MultiplayerRoom extends Room {
     this.onMessage("heal", (client) => {
       this.handleHeal(client);
     });
+
+    this.onMessage("roundIntroComplete", () => {
+      this.beginRoundGameplay();
+    });
   }
 
   onJoin(client: Client, options: { role?: Role }) {
@@ -166,27 +170,9 @@ export class MultiplayerRoom extends Room {
       p.questionIndex = 0;
     }
 
-    this.roundEndsAt = this.state.timerEnabled
-      ? Date.now() + this.state.timerMinutes * 60 * 1000
-      : 0;
-
-    if (this.state.timerEnabled && this.state.timerMinutes > 0) {
-      this.roundTimer = setTimeout(() => {
-        this.finishRoundByHealth();
-      }, this.state.timerMinutes * 60 * 1000);
-
-      this.timerInterval = setInterval(() => {
-        if (this.state.status !== "in_match") return;
-
-        this.broadcastGameState();
-
-        if (Date.now() >= this.roundEndsAt) {
-          this.clearTimerIntervalOnly();
-        }
-      }, 1000);
-    }
-
     this.broadcast("gameStarted");
+
+    this.roundEndsAt = 0;
 
     this.broadcast("roundStarted", {
       roundNumber: this.roundNumber,
@@ -220,8 +206,6 @@ export class MultiplayerRoom extends Room {
       difficulty: this.state.difficulty
     });
 
-    this.sendQuestionsToAllActivePlayers();
-    this.broadcastGameState();
   }
 
   private createPairs(playerIds: string[]) {
@@ -639,6 +623,30 @@ export class MultiplayerRoom extends Room {
     }
 
     return copy;
+  }
+
+  private beginRoundGameplay() {
+    if (this.state.status !== "in_match") return;
+
+    this.clearRoundTimers();
+
+    this.roundEndsAt = this.state.timerEnabled
+      ? Date.now() + this.state.timerMinutes * 60 * 1000
+      : 0;
+
+    if (this.state.timerEnabled && this.state.timerMinutes > 0) {
+      this.roundTimer = setTimeout(() => {
+        this.finishRoundByHealth();
+      }, this.state.timerMinutes * 60 * 1000);
+
+      this.timerInterval = setInterval(() => {
+        if (this.state.status !== "in_match") return;
+        this.broadcastGameState();
+      }, 1000);
+    }
+
+    this.sendQuestionsToAllActivePlayers();
+    this.broadcastGameState();
   }
 
   getPlayers() {
