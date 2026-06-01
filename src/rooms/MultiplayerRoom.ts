@@ -231,7 +231,7 @@ export class MultiplayerRoom extends Room {
         const byeClient = this.clients.find(c => c.sessionId === a);
 
         byeClient?.send("byeRound", {
-          message: "You automatically move on to the next round"
+          message: "You move onto the next round, prepare to fight"
         });
 
         continue;
@@ -724,7 +724,13 @@ export class MultiplayerRoom extends Room {
 
     this.clearRoundTimers();
 
-    this.broadcast("gamePaused");
+    for (const match of this.activeMatches) {
+      const aClient = this.clients.find(c => c.sessionId === match.playerAId);
+      const bClient = this.clients.find(c => c.sessionId === match.playerBId);
+
+      aClient?.send("gamePaused");
+      bClient?.send("gamePaused");
+    }
   }
 
   private resumeMultiplayerMatch() {
@@ -747,7 +753,13 @@ export class MultiplayerRoom extends Room {
 
     this.broadcastGameState();
     this.broadcastHostTimer();
-    this.broadcast("gameResumed");
+    for (const match of this.activeMatches) {
+      const aClient = this.clients.find(c => c.sessionId === match.playerAId);
+      const bClient = this.clients.find(c => c.sessionId === match.playerBId);
+
+      aClient?.send("gameResumed");
+      bClient?.send("gameResumed");
+    }
   }
 
   private cancelTournament() {

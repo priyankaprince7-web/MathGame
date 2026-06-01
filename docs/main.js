@@ -116,6 +116,37 @@ function setStatus(message) {
   if (joinStatus && !joinScreen.hidden) joinStatus.textContent = message;
 }
 
+function hideGameplayControls() {
+  if (healthPanel) healthPanel.hidden = true;
+
+  if (answerInput) {
+    answerInput.value = "";
+    answerInput.hidden = true;
+    answerInput.disabled = true;
+    answerInput.style.display = "none";
+  }
+
+  if (customKeypadHeal) {
+    customKeypadHeal.hidden = true;
+    customKeypadHeal.style.display = "none";
+  }
+
+  if (customKeypadAttackOnly) {
+    customKeypadAttackOnly.hidden = true;
+    customKeypadAttackOnly.style.display = "none";
+  }
+
+  if (singleKeypad) {
+    singleKeypad.hidden = true;
+    singleKeypad.style.display = "none";
+  }
+
+  if (submitAnswerBtn) submitAnswerBtn.disabled = true;
+  if (attackBtn) attackBtn.disabled = true;
+  if (healBtn) healBtn.disabled = true;
+  if (attackOnlyBtn) attackOnlyBtn.disabled = true;
+}
+
 joinBtn.onclick = async () => {
   const name = nameInput.value.trim() || "Player";
   const roomId = roomInput.value.trim();
@@ -394,6 +425,9 @@ function setupRoomListeners() {
   room.onMessage("matchEnded", (data) => {
     showScreen("gameScreen");
 
+    isPhonePaused = false;
+    isByeRound = false;
+
     gameScreen.classList.add("ended");
     document.body.classList.remove("lockScroll");
 
@@ -407,19 +441,7 @@ function setupRoomListeners() {
       </div>
     `;
 
-    // fully hide gameplay UI
-    if (customKeypadHeal) customKeypadHeal.hidden = true;
-    if (customKeypadAttackOnly) customKeypadAttackOnly.hidden = true;
-    answerInput.hidden = true;
-
-    if (customKeypadHeal) customKeypadHeal.style.display = "none";
-    if (customKeypadAttackOnly) customKeypadAttackOnly.style.display = "none";
-
-    if (submitAnswerBtn) submitAnswerBtn.disabled = true;
-    if (attackBtn) attackBtn.disabled = true;
-    if (healBtn) healBtn.disabled = true;
-    if (attackOnlyBtn) attackOnlyBtn.disabled = true;
-    answerInput.disabled = true;
+    hideGameplayControls();
   });
 
   room.onLeave(() => {
@@ -509,54 +531,26 @@ function setupRoomListeners() {
     }
   });
 
-  room.onMessage("byeRound", (data) => {
-    isByeRound = true;
+room.onMessage("byeRound", (data) => {
+  isPhonePaused = false;
+  isByeRound = true;
 
-    showScreen("gameScreen");
-    gameScreen.classList.remove("ended");
+  showScreen("gameScreen");
+  gameScreen.classList.remove("ended");
 
-    if (questionNumberText) {
-      questionNumberText.hidden = true;
-      questionNumberText.textContent = "";
-    }
+  if (questionNumberText) {
+    questionNumberText.hidden = true;
+    questionNumberText.textContent = "";
+  }
 
-    if (questionText) {
-      questionText.textContent =
-        data.message || "You move onto the next round, prepare to fight";
-    }
+  if (questionText)
+    questionText.textContent = data.message || "You move onto the next round, prepare to fight";
 
-    if (statusText)
-      statusText.textContent = "Waiting for the next round.";
+  if (statusText)
+    statusText.textContent = "Waiting for the next round.";
 
-    if (healthPanel)
-      healthPanel.hidden = true;
-
-    if (answerInput) {
-      answerInput.value = "";
-      answerInput.hidden = true;
-      answerInput.disabled = true;
-    }
-
-    if (customKeypadHeal) {
-      customKeypadHeal.hidden = true;
-      customKeypadHeal.style.display = "none";
-    }
-
-    if (customKeypadAttackOnly) {
-      customKeypadAttackOnly.hidden = true;
-      customKeypadAttackOnly.style.display = "none";
-    }
-
-    if (singleKeypad)
-      singleKeypad.hidden = true;
-
-    if (submitAnswerBtn) submitAnswerBtn.disabled = true;
-    if (attackBtn) attackBtn.disabled = true;
-    if (healBtn) healBtn.disabled = true;
-    if (attackOnlyBtn) attackOnlyBtn.disabled = true;
-  });
-
-}
+  hideGameplayControls();
+});
 
 function submitAnswer() {
   if (!room) return;
