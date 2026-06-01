@@ -90,6 +90,18 @@ export class MultiplayerRoom extends Room {
     this.onMessage("roundIntroComplete", () => {
       this.beginRoundGameplay();
     });
+
+    this.onMessage("pauseMultiplayer", () => {
+      this.pauseMultiplayerMatch();
+    });
+
+    this.onMessage("resumeMultiplayer", () => {
+      this.resumeMultiplayerMatch();
+    });
+
+    this.onMessage("cancelTournament", () => {
+      this.cancelTournament();
+    });
   }
 
   onJoin(client: Client, options: { role?: Role }) {
@@ -691,5 +703,54 @@ export class MultiplayerRoom extends Room {
 
   broadcastStatus(message: string) {
     this.broadcast("statusMessage", message);
+  }
+
+  private pausedTimeRemainingMs = 0;
+
+  private pauseMultiplayerMatch() {
+    if (this.state.status !== "in_match") return;
+
+    this.pausedTimeRemainingMs = this.state.timerEnabled
+      ? Math.max(0, this.roundEndsAt - Date.now())
+      : 0;
+
+    this.clearRoundTimers();
+  }
+
+  private resumeMultiplayerMatch() {
+    if (this.state.status !== "in_match") return;
+
+    if (this.state.timerEnabled && this.pausedTimeRemainingMs > 0) {
+      this.roundEndsAt = Date.now() + this.pausedTimeRemainingMs;
+
+      this.roundTimer = setTimeout(() => {
+        this.finishRoundByHealth();
+      }, this.pausedTimeRemainingMs);
+
+      this.timerInterval = setInterval(() => {
+        if (this.state.status !== "in_match") return;
+
+        this.broadcastGameState();
+        this.broadcastHostTimer();
+      }, 1000);
+    }
+
+    this.broadcastGameState();
+    this.broadcastHostTimer();
+  }
+
+  private cancelTournament() {
+    this.clearRoundTimers();
+
+    this.state.status = "lobby";
+    this.roundNumber = 0;
+    this.roundEndsAt = 0;
+    this.pausedTimeRemainingMs = 0;
+
+    this.activeMatches = [];
+    this.activePlayerIds = [];
+    this.eliminatedIds.clear();
+
+    this.broadcastPlayers();
   }
 }
