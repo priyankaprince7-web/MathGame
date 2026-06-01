@@ -636,6 +636,7 @@ if (healBtn) {
     room.send("heal");
   });
 }
+}
 
 function showSinglePlayerControls() {
   if (singleKeypad) singleKeypad.hidden = false;
