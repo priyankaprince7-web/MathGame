@@ -47,6 +47,7 @@ const singleKeypad = document.getElementById("singleKeypad");
 let currentHealingEnabled = true;
 let phoneTimerEnabled = false;
 let isPhonePaused = false;
+let isByeRound = false;
 
 function setKeypadMode(healingEnabled) {
   if (isSinglePlayerController) {
@@ -238,6 +239,7 @@ function setupRoomListeners() {
   });
 
   room.onMessage("gameStarted", () => {
+    isByeRound = false;
     showScreen("gameScreen");
     gameScreen.classList.remove("ended");
 
@@ -268,6 +270,7 @@ function setupRoomListeners() {
   });
 
   room.onMessage("question", (data) => {
+    if (isByeRound) return;
     if (isPhonePaused) return;
 
     showScreen("gameScreen");
@@ -507,8 +510,9 @@ function setupRoomListeners() {
   });
 
   room.onMessage("byeRound", (data) => {
-    showScreen("gameScreen");
+    isByeRound = true;
 
+    showScreen("gameScreen");
     gameScreen.classList.remove("ended");
 
     if (questionNumberText) {
@@ -516,35 +520,40 @@ function setupRoomListeners() {
       questionNumberText.textContent = "";
     }
 
-    if (questionText)
+    if (questionText) {
       questionText.textContent =
-        data.message || "You automatically move on to the next round";
+        data.message || "You move onto the next round, prepare to fight";
+    }
 
     if (statusText)
-      statusText.textContent = "Waiting for the next round...";
-
-    if (customKeypadHeal) customKeypadHeal.hidden = true;
-    if (customKeypadAttackOnly) customKeypadAttackOnly.hidden = true;
+      statusText.textContent = "Waiting for the next round.";
 
     if (healthPanel)
       healthPanel.hidden = true;
 
     if (answerInput) {
+      answerInput.value = "";
       answerInput.hidden = true;
       answerInput.disabled = true;
     }
 
-    if (submitAnswerBtn)
-      submitAnswerBtn.disabled = true;
+    if (customKeypadHeal) {
+      customKeypadHeal.hidden = true;
+      customKeypadHeal.style.display = "none";
+    }
 
-    if (attackBtn)
-      attackBtn.disabled = true;
+    if (customKeypadAttackOnly) {
+      customKeypadAttackOnly.hidden = true;
+      customKeypadAttackOnly.style.display = "none";
+    }
 
-    if (healBtn)
-      healBtn.disabled = true;
+    if (singleKeypad)
+      singleKeypad.hidden = true;
 
-    if (attackOnlyBtn)
-      attackOnlyBtn.disabled = true;
+    if (submitAnswerBtn) submitAnswerBtn.disabled = true;
+    if (attackBtn) attackBtn.disabled = true;
+    if (healBtn) healBtn.disabled = true;
+    if (attackOnlyBtn) attackOnlyBtn.disabled = true;
   });
 
 }
