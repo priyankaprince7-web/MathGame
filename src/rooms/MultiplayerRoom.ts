@@ -227,7 +227,15 @@ export class MultiplayerRoom extends Room {
       const a = playerIds[i];
       const b = playerIds[i + 1];
 
-      if (!b) continue;
+      if (!b) {
+        const byeClient = this.clients.find(c => c.sessionId === a);
+
+        byeClient?.send("byeRound", {
+          message: "You automatically move on to the next round"
+        });
+
+        continue;
+      }
 
       pairs.push({
         playerAId: a,
@@ -715,6 +723,8 @@ export class MultiplayerRoom extends Room {
       : 0;
 
     this.clearRoundTimers();
+
+    this.broadcast("gamePaused");
   }
 
   private resumeMultiplayerMatch() {
@@ -737,6 +747,7 @@ export class MultiplayerRoom extends Room {
 
     this.broadcastGameState();
     this.broadcastHostTimer();
+    this.broadcast("gameResumed");
   }
 
   private cancelTournament() {
@@ -750,6 +761,8 @@ export class MultiplayerRoom extends Room {
     this.activeMatches = [];
     this.activePlayerIds = [];
     this.eliminatedIds.clear();
+
+    this.broadcast("returnToLobby");
 
     this.broadcastPlayers();
   }

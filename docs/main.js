@@ -506,6 +506,47 @@ function setupRoomListeners() {
     }
   });
 
+  room.onMessage("byeRound", (data) => {
+    showScreen("gameScreen");
+
+    gameScreen.classList.remove("ended");
+
+    if (questionNumberText) {
+      questionNumberText.hidden = true;
+      questionNumberText.textContent = "";
+    }
+
+    if (questionText)
+      questionText.textContent =
+        data.message || "You automatically move on to the next round";
+
+    if (statusText)
+      statusText.textContent = "Waiting for the next round...";
+
+    if (customKeypadHeal) customKeypadHeal.hidden = true;
+    if (customKeypadAttackOnly) customKeypadAttackOnly.hidden = true;
+
+    if (healthPanel)
+      healthPanel.hidden = true;
+
+    if (answerInput) {
+      answerInput.hidden = true;
+      answerInput.disabled = true;
+    }
+
+    if (submitAnswerBtn)
+      submitAnswerBtn.disabled = true;
+
+    if (attackBtn)
+      attackBtn.disabled = true;
+
+    if (healBtn)
+      healBtn.disabled = true;
+
+    if (attackOnlyBtn)
+      attackOnlyBtn.disabled = true;
+  });
+
 }
 
 function submitAnswer() {
